@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "知音卡",
+    "name": "知声卡",
     "slug": "expo-cards",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "exposeed",
+    "scheme": "echocards",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
@@ -35,7 +35,15 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "允许知声卡使用麦克风，以识别你的跟读内容。",
+          "speechRecognitionPermission": "允许知声卡使用语音识别，以判断跟读是否完成。"
+        }
+      ],
+      "./plugins/with-gradle-wrapper-network"
     ],
     "experiments": {
       "typedRoutes": true,

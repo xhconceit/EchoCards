@@ -48,3 +48,31 @@
 ## 文档入口
 
 后续在 docs/README.md 中维护。
+
+## 本地开发
+
+自动跟读使用原生语音识别模块，因此不能在 Expo Go 中运行。首次运行或原生依赖发生变化后，需要重新生成并安装 Development Build：
+
+```bash
+npm install
+
+# iOS 模拟器
+npm run ios
+
+# Android 模拟器
+npm run android
+```
+
+真机通过 USB 连接后使用：
+
+```bash
+npm run ios:device
+# 或
+npm run android:device
+```
+
+Development Build 已安装后，日常只需启动 Metro：
+
+```bash
+npm start
+```
