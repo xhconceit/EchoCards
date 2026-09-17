@@ -1,73 +1,8 @@
 # Dependencies
 node_modules/
 
-# Expo
-.expo/
-.expo-shared/
-dist/
-web-build/
-expo-env.d.ts
 
-# Generated native projects
-/android/
-/ios/
 
-# Metro
-.metro-health-check*
-.metro-cache/
-
-# Tests
-coverage/
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Keep environment variable examples
-!.env.example
-
-# Android build files
-.gradle/
-**/.gradle/
-**/build/
-*.apk
-*.aab
-*.jks
-*.keystore
-local.properties
-
-# iOS build files
-Pods/
-DerivedData/
-*.xcworkspace
-*.xcuserstate
-xcuserdata/
-*.ipa
-*.dSYM
-*.dSYM.zip
-
-# Signing and certificates
-*.p12
-*.mobileprovision
-*.cer
-*.provisionprofile
-
-# Editors
-.idea/
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-*.swp
-*.swo
 
 # macOS
 .DS_Store
@@ -81,13 +16,6 @@ tmp/
 temp/
 *.tmp
 *.temp
-
-# Local application data
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
 
 
 ._*
