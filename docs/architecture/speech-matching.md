@@ -299,7 +299,7 @@ function getCoverageThreshold(length: number): number {
 }
 ```
 
-这些值是初始参数，必须通过 Android 和 iPhone 真机测试调整。
+这些值是初始参数，必须通过不同品牌和系统版本的 Android 真机测试调整。
 
 ## 12. 稳定性判断
 

@@ -80,7 +80,9 @@ erDiagram
     }
 ```
 
-## 3. TypeScript 类型
+## 3. 领域类型
+
+以下片段用于表达字段和可空性，是设计伪代码；Android 实现使用 Kotlin `data class`、`enum class` 和 Room Entity。
 
 ```ts
 export type ID = string;
@@ -433,19 +435,22 @@ CREATE INDEX IF NOT EXISTS idx_attempts_card_ended
 
 ## 12. 数据库版本
 
-使用 SQLite 的 `user_version` 保存 Schema 版本：
+Room 数据库声明 Schema 版本，底层同步到 SQLite `user_version`：
 
 ```sql
 PRAGMA user_version = 1;
 ```
 
-以后每次修改表结构都新增迁移文件，不能直接修改已经发布的迁移。
+以后每次修改表结构都新增 Room `Migration`，导出 schema JSON，并补充迁移测试；不能直接改写已经发布的迁移行为。
 
 示例：
 
 ```text
-src/infrastructure/database/migrations/
-├── 001_initial.sql
-├── 002_add_card_tags.sql
-└── 003_add_review_schedule.sql
+app/schemas/
+└── <database-class>/
+    ├── 1.json
+    └── 2.json
+
+app/src/main/java/.../data/database/migration/
+└── Migrations.kt
 ```

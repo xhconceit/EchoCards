@@ -18,4 +18,4 @@
 
 ## 架构决策
 
-- [为什么使用 React Native](decisions/001-use-react-native.md)
+- [为什么仅开发 Android 原生 App](decisions/001-use-native-android.md)

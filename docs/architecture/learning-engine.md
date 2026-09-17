@@ -16,7 +16,7 @@ Learning Engine 负责控制整个学习过程：
 - 处理暂停、重读、跳过和手动翻页
 - 取消旧语音任务，防止重复翻页
 
-Learning Engine 使用 TypeScript 实现，不依赖 React 页面。
+Learning Engine 使用 Kotlin 实现，不依赖 Compose 页面或 Android UI 类型。文中的类型片段是领域设计伪代码，实现时使用 Kotlin 的 `sealed interface`、`data class`、协程和 `StateFlow` 表达同等约束。
 
 ## 2. 架构位置
 
@@ -24,15 +24,15 @@ Learning Engine 使用 TypeScript 实现，不依赖 React 页面。
 flowchart LR
     UI[学习页面]
     Engine[Learning Engine]
-    Store[Learning Store]
+    State[StateFlow 状态]
     Player[Speech Player]
     Recognizer[Speech Recognizer]
     Matcher[Text Matcher]
     Repository[Learning Repository]
 
     UI -->|命令| Engine
-    Engine -->|更新状态| Store
-    Store -->|渲染| UI
+    Engine -->|更新状态| State
+    State -->|渲染| UI
 
     Engine --> Player
     Engine --> Recognizer
@@ -578,7 +578,7 @@ await engine.dispose();
 6. 取消音频中断监听。
 7. 将阶段设置为 `disposed`。
 
-`disposed` 状态不能再接收命令或更新 Store。
+`disposed` 状态不能再接收命令或更新 `StateFlow`。
 
 ## 16. 第一版验收重点
 

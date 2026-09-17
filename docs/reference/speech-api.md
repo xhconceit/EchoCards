@@ -14,52 +14,44 @@
 - 检查设备能力和麦克风权限
 - 处理停止、取消和系统音频中断
 
-Android 和 iOS 的平台差异必须封装在语音模块内部。
+Android 系统服务的生命周期、权限和错误必须封装在语音模块内部。
+
+本文中的接口片段用于表达契约，是设计伪代码；Android 实现使用 Kotlin 接口、`data class`、`sealed interface`、协程与 `Flow`。
 
 ## 2. 模块边界
 
 ```mermaid
 flowchart LR
     Engine[Learning Engine]
-    TS[TypeScript 语音接口]
-    Android[Android Kotlin]
-    IOS[iOS Swift]
+    Contract[Kotlin 领域接口]
+    Adapter[Android 语音适配器]
     Services[系统语音服务]
 
-    Engine --> TS
-    TS --> Android
-    TS --> IOS
-    Android --> Services
-    IOS --> Services
+    Engine --> Contract
+    Contract --> Adapter
+    Adapter --> Services
 ```
 
-Learning Engine 不直接调用 Android 或 iOS API。
+Learning Engine 不直接调用 Android SDK API。
 
 ## 3. 文件结构
 
 ```text
-src/
-└── infrastructure/
-    └── speech/
-        ├── types.ts
-        ├── SpeechService.ts
-        ├── NativeSpeechPlayer.ts
-        ├── NativeSpeechRecognizer.ts
-        └── normalizeSpeechError.ts
-
-modules/
-└── echo-speech/
-    ├── src/
-    │   └── EchoSpeechModule.ts
-    ├── android/
-    │   └── EchoSpeechModule.kt
-    ├── ios/
-    │   └── EchoSpeechModule.swift
-    ├── expo-module.config.json
-    └── package.json
+app/src/main/java/.../
+├── domain/speech/
+│   ├── SpeechModels.kt
+│   ├── SpeechPlayer.kt
+│   ├── SpeechRecognizer.kt
+│   └── SpeechCapabilityService.kt
+└── speech/android/
+    ├── AndroidSpeechPlayer.kt
+    ├── AndroidSpeechRecognizer.kt
+    ├── AndroidSpeechCapabilityService.kt
+    ├── AudioFocusController.kt
+    └── SpeechErrorMapper.kt
 ```
 
-第一版使用 Expo Development Build 加载自定义原生模块。
+第一版由 Android 原生应用直接调用系统语音服务，不经过 JS 桥接或第三方跨平台封装。
 
 ## 4. 设备能力
 
@@ -271,7 +263,7 @@ export type AudioInterruptionEvent =
       route: 'speaker' | 'receiver' | 'headphones' | 'bluetooth';
     };
 
-export interface AudioSessionService {
+export interface AudioFocusController {
   configureForPlayback(): Promise<void>;
   configureForRecognition(): Promise<void>;
   deactivate(): Promise<void>;
@@ -313,7 +305,7 @@ sequenceDiagram
 
 ## 10. Android 实现
 
-Android 原生模块使用 Kotlin 封装：
+Android 适配器使用 Kotlin 封装：
 
 - `android.speech.tts.TextToSpeech`
 - `android.speech.SpeechRecognizer`
@@ -334,39 +326,14 @@ Android 原生模块使用 Kotlin 封装：
 
 不能假设所有 Android 手机都有相同的语音引擎、语言包或离线识别能力。
 
-## 11. iOS 实现
-
-iOS 原生模块使用 Swift 封装：
-
-- `AVSpeechSynthesizer`
-- `AVSpeechSynthesizerDelegate`
-- `SFSpeechRecognizer`
-- `SFSpeechAudioBufferRecognitionRequest`
-- `AVAudioEngine`
-- `AVAudioSession`
-- 麦克风和语音识别权限
-
-需要处理：
-
-- 使用 delegate 通知朗读开始、完成和取消
-- 使用 `AVAudioEngine` 获取麦克风音频
-- 返回实时识别结果
-- 检查目标语言对应的识别器是否可用
-- 配置和释放 `AVAudioSession`
-- 避免重复安装音频输入 tap
-- App 进入后台时停止录音
-- 处理来电和音频路由变化
-
-iOS 需要分别声明麦克风用途和语音识别用途。
-
-## 12. 权限流程
+## 11. 权限流程
 
 自动跟读入口的权限流程：
 
 ```text
 用户打开自动跟读
         ↓
-检查麦克风权限和语音识别权限
+检查麦克风权限和语音识别服务
         ↓
 尚未决定 → 显示用途说明 → 请求权限
         ↓
@@ -383,7 +350,7 @@ iOS 需要分别声明麦克风用途和语音识别用途。
 
 不能在 App 启动时无理由请求麦克风权限。
 
-## 13. 隐私边界
+## 12. 隐私边界
 
 第一版遵守以下规则：
 
@@ -395,7 +362,7 @@ iOS 需要分别声明麦克风用途和语音识别用途。
 - 调试日志在正式构建中关闭或脱敏。
 - 切换到后台后立即停止收音。
 
-## 14. 模拟实现
+## 13. 模拟实现
 
 为了在没有真机语音环境时开发页面，需要提供模拟实现：
 
@@ -404,7 +371,7 @@ export interface SpeechServices {
   player: SpeechPlayer;
   recognizer: SpeechRecognizer;
   capabilities: SpeechCapabilityService;
-  audioSession: AudioSessionService;
+  audioFocus: AudioFocusController;
 }
 ```
 
@@ -415,7 +382,7 @@ const mockSpeechServices: SpeechServices = {
   player: new MockSpeechPlayer(),
   recognizer: new MockSpeechRecognizer(),
   capabilities: new MockSpeechCapabilityService(),
-  audioSession: new MockAudioSessionService(),
+  audioFocus: new MockAudioFocusController(),
 };
 ```
 
@@ -429,9 +396,9 @@ const mockSpeechServices: SpeechServices = {
 - 模拟迟到回调
 - 模拟重复完成回调
 
-## 15. 第一版验收条件
+## 14. 第一版验收条件
 
-- Android 和 iPhone 使用相同的 TypeScript 接口。
+- Android 语音实现遵守统一的 Kotlin 领域接口。
 - App 朗读时不同时收音。
 - 朗读完成事件可以正确关联到当前卡片。
 - 部分识别结果能够实时返回。

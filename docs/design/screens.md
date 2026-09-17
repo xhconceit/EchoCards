@@ -26,25 +26,16 @@ flowchart TD
     Result --> Learn
 ```
 
-对应 Expo Router 路由：
+对应 Navigation Compose 路由：
 
 ```text
-app/
-├── _layout.tsx
-├── index.tsx
-├── settings.tsx
-├── decks/
-│   ├── new.tsx
-│   ├── [deckId].tsx
-│   └── [deckId]/
-│       └── edit.tsx
-├── cards/
-│   ├── new.tsx
-│   └── [cardId]/
-│       └── edit.tsx
-└── learn/
-    ├── [deckId].tsx
-    └── result.tsx
+Home
+Settings
+Deck/{deckId}
+DeckEdit?deckId={deckId}
+CardEdit/{deckId}?cardId={cardId}
+Learn/{deckId}?mode={mode}
+LearnResult/{sessionId}
 ```
 
 ## 2. 全局导航

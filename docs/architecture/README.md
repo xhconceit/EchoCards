@@ -4,7 +4,7 @@
 
 ## 1. 架构目标
 
-知声卡需要同时运行在 Android 和 iPhone，并支持：
+知声卡第一版仅运行在 Android，并支持：
 
 - 卡片浏览和编辑
 - 手动滑动学习
@@ -20,16 +20,15 @@
 
 | 范围 | 技术 |
 |---|---|
-| 应用框架 | React Native |
-| 开发语言 | TypeScript |
-| 工程工具 | Expo Development Build |
-| 路由 | Expo Router |
-| 状态管理 | Zustand |
-| 本地数据库 | SQLite |
-| 手势 | React Native Gesture Handler |
-| 动画 | React Native Reanimated |
-| Android 原生代码 | Kotlin |
-| iOS 原生代码 | Swift |
+| 平台 | Android |
+| 开发语言 | Kotlin |
+| UI | Jetpack Compose + Material 3 |
+| 导航 | Navigation Compose |
+| 状态管理 | ViewModel + StateFlow |
+| 异步 | Kotlin Coroutines |
+| 本地数据库 | Room（SQLite） |
+| 手势与动画 | Compose Foundation / Animation |
+| 语音能力 | Android TextToSpeech / SpeechRecognizer |
 
 具体依赖版本在创建工程时锁定。
 
@@ -49,3 +48,4 @@ flowchart LR
     User -->|跟读语音| ASR
     ASR -->|识别文字| App
     App <--> DB
+```
