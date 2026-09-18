@@ -7,14 +7,13 @@
 <title>知声卡 EchoCards · 首页 / 卡片详情 / 学习</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    知声卡 · 视觉系统
    画布 #F7F8F8 / 卡面 #FFF / 墨 #101314
    青碧 #0E9A9A  —— 仅图形与大字（环、呼吸点、焦点）
    青碧深 #0A7373 —— 白字填充与小号文字（AA）
-   全站唯一渐变：首页「今日复习」卡描边
    卡堆构造（三屏统一）：顶卡 + 一张以右下角为轴的 45° 卡
    按压反馈：液态玻璃 —— 高光 + 暗角 + 边缘增厚 + 压弯
    ============================================================ */
@@ -33,6 +32,7 @@
   --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
 html,body{background:#EFF2F2}
 body{
   font-family:var(--font);color:var(--fg);
@@ -77,18 +77,6 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .list-head{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:600;margin:22px 0 12px}
 .list-head .cnt{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.1em}
 
-/* ---------- 首页 · 今日复习（全站唯一渐变：描边） ---------- */
-.review{
-  position:relative;display:flex;align-items:center;gap:14px;width:100%;
-  padding:17px 18px;border:0;border-radius:18px;text-align:left;cursor:pointer;
-  background:linear-gradient(135deg,#0E9A9A 0%,#5FC9C4 44%,#0A7373 100%);
-}
-.review::before{content:"";position:absolute;inset:1.5px;border-radius:16.5px;background:var(--surface)}
-.review > *{position:relative;z-index:2}
-.rev-title{display:block;font-size:15px;font-weight:600;letter-spacing:-.02em}
-.rev-meta{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
-.review .chev{width:17px;height:17px;margin-left:auto;color:var(--muted);flex:none}
-
 /* ---------- 首页 · 搜索（内容区，不放头部） ---------- */
 .search{display:flex;align-items:center;gap:9px;height:44px;margin-top:14px;padding:0 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface);transition:border-color .16s ease,box-shadow .16s ease}
 .search svg{width:16px;height:16px;color:var(--muted);flex:none}
@@ -101,8 +89,6 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .d-main{flex:1;min-width:0;display:flex;flex-direction:column}
 .d-name{display:block;font-size:15px;font-weight:600;letter-spacing:-.02em}
 .d-meta{display:block;margin-top:3px;font-size:12px;color:var(--muted)}
-.d-bar{display:block;height:3px;margin-top:9px;border-radius:2px;background:var(--track);overflow:hidden}
-.d-bar i{display:block;height:100%;border-radius:2px;background:var(--fg)}
 
 /* --- 卡堆语言（小尺寸）：与学习页同一构造 --- */
 .mini{position:relative;width:32px;height:44px;flex:none}
@@ -128,9 +114,6 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .hero-l{flex:1;min-width:0}
 .hero h2{font-size:22px;font-weight:700;letter-spacing:-.04em;line-height:1.28}
 .hero p{margin-top:7px;font-size:13px;color:var(--muted)}
-.ring-wrap{position:relative;width:72px;height:72px;flex:none;display:grid;place-items:center}
-.ring{width:72px;height:72px;transform:rotate(-90deg)}
-.ring-num{position:absolute;font:700 15px/1 var(--lat);letter-spacing:-.02em}
 .actions{display:flex;gap:10px;margin:20px 0 2px}
 .btn{flex:1;height:48px;display:grid;place-items:center;border:0;border-radius:14px;font:inherit;font-size:15px;font-weight:600;letter-spacing:-.01em;cursor:pointer}
 .btn.primary{background:var(--teal-deep);color:#fff}
@@ -159,14 +142,13 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .field > span{font-size:12px;color:var(--muted)}
 .field input{width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:#FBFCFC;font:inherit;font-size:15px;color:var(--fg);outline:none;transition:border-color .16s ease,background .16s ease,box-shadow .16s ease}
 .field input:focus{border-color:var(--teal);background:var(--surface)}
-.field input.mono{font-family:var(--mono);font-size:14px;letter-spacing:.06em}
-.sel{align-self:flex-start;min-width:152px;height:44px;display:inline-flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:#FBFCFC;font:inherit;font-size:15px;color:var(--fg);cursor:pointer}
-.sel svg{width:15px;height:15px;color:var(--muted);flex:none}
-.sel-menu{position:fixed;z-index:9999;display:none;flex-direction:column;gap:2px;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 42px rgba(12,15,16,.16)}
-.sel-menu.on{display:flex}
-.sel-menu button{text-align:left;padding:11px 12px;border:0;border-radius:10px;background:none;font:inherit;font-size:14px;color:var(--fg);cursor:pointer}
-.sel-menu button:hover{background:#F3F5F5}
-.sel-menu button.on{background:#EFF6F6;color:var(--teal-deep);font-weight:600}
+.crow select{max-width:48%;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;font-size:13px;color:var(--fg)}
+.card-row-main{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:0;background:none;font:inherit;color:var(--fg);cursor:pointer}
+.reorder{width:30px;height:36px;flex:none;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer}
+.reorder:disabled{opacity:.3;cursor:default}
+.btn:disabled{opacity:.55;cursor:default}
+.field textarea{width:100%;min-height:88px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:#FBFCFC;font:inherit;font-size:15px;color:var(--fg);resize:vertical}
+.field textarea:focus{outline:none;border-color:var(--teal);background:var(--surface)}
 
 /* ---------- 学习 ---------- */
 .mode-btn{
@@ -183,9 +165,6 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .counter{margin-left:auto;margin-right:12px;font:500 12px/1 var(--mono);letter-spacing:.16em;color:var(--muted)}
 .counter b{color:var(--fg);font-weight:500}
 
-.prog{flex:none;height:2px;background:var(--track)}
-.prog i{display:block;height:100%;background:var(--fg);transition:width .3s ease}
-
 .study-body{flex:1;display:grid;place-items:center;padding:0 26px 100px}
 .stack{position:relative;width:100%;height:400px}
 
@@ -200,9 +179,9 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .card-face.back{opacity:0}
 .card.flipped .card-face.front{opacity:0}
 .card.flipped .card-face.back{opacity:1}
-.card-face .w{font-size:46px;font-weight:700;letter-spacing:-.03em;line-height:1.1;text-align:center}
-.card-face .r{font-size:14px;color:var(--muted);letter-spacing:.14em}
-.card-face.back .w{font-size:34px}
+.card-face .w{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.2;text-align:center}
+.card-face .r{font-size:17px;color:var(--muted);letter-spacing:0;line-height:1.65;text-align:center}
+.card-face.back .w{font-size:24px}
 
 .audio{
   position:absolute;left:50%;bottom:24px;transform:translateX(-50%);
@@ -243,9 +222,9 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
 /* 只给本来就是 relative 的控件补定位上下文。
    .fab 与 .audio 已经是 absolute —— 绝不在此列。 */
-.icn,.tab,.btn,.review,.deck,.sel,.mode-btn,.sel-menu button{position:relative}
+.icn,.tab,.btn,.deck,.mode-btn{position:relative}
 
-.icn,.tab,.btn,.fab,.review,.deck,.audio,.sel,.mode-btn,.sel-menu button{
+.icn,.tab,.btn,.fab,.deck,.audio,.mode-btn{
   overflow:hidden;
   -webkit-tap-highlight-color:transparent;
   transition:
@@ -258,8 +237,8 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 }
 
 /* —— 玻璃层：休息时透明且缩小，按下时铺满 —— */
-.icn::after,.tab::after,.btn::after,.fab::after,.review::after,.deck::after,
-.audio::after,.sel::after,.mode-btn::after,.sel-menu button::after{
+.icn::after,.tab::after,.btn::after,.fab::after,.deck::after,
+.audio::after,.mode-btn::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   opacity:0;z-index:1;
   background:
@@ -276,7 +255,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 }
 
 /* —— 明显档：两个学习按钮、悬浮加号、首页复习卡 —— */
-.btn:active,.fab:active,.review:active{
+.btn:active,.fab:active{
   transition-duration:.09s;
   transition-timing-function:cubic-bezier(.22,.61,.36,1);
 }
@@ -299,17 +278,12 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
              inset 0 -3px 9px rgba(0,0,0,.26),
              0 2px 8px rgba(10,115,115,.22);
 }
-.review:active{
-  transform:scale(1.010,.978);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.78),
-             inset 0 -3px 9px rgba(16,19,20,.16);
-}
-.btn:active::after,.fab:active::after,.review:active::after{
+.btn:active::after,.fab:active::after{
   opacity:1;transform:scale(1);transition-duration:.09s;
 }
 
 /* —— 极轻档：图标键、底部 Tab、卡组行、下拉、方式按钮、发音键 —— */
-.icn:active,.tab:active,.deck:active,.sel:active,.mode-btn:active,.audio:active,.sel-menu button:active{
+.icn:active,.tab:active,.deck:active,.mode-btn:active,.audio:active{
   transition-duration:.09s;
   transition-timing-function:cubic-bezier(.22,.61,.36,1);
 }
@@ -327,21 +301,14 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
   transform:scale(.992);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -2px 6px rgba(16,19,20,.11);
 }
-.sel:active{
-  background:#F3F9F9;border-color:#D5DCDC;
-  transform:scale(.985);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -2px 6px rgba(16,19,20,.11);
-}
 .mode-btn:active{opacity:.66;transform:scale(.97)}
 .audio:active{
   transform:translateX(-50%) scale(.94);
   border-color:#CFE4E4;background:#F1F8F8;
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -2px 6px rgba(16,19,20,.13);
 }
-.sel-menu button:active{background:#E9F2F2}
-
-.icn:active::after,.deck:active::after,.sel:active::after,
-.audio:active::after,.sel-menu button:active::after{
+.icn:active::after,.deck:active::after,
+.audio:active::after{
   opacity:.66;transform:scale(1);transition-duration:.09s;
 }
 .tab:active::after,.mode-btn:active::after{
@@ -351,6 +318,13 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 /* 输入框走焦点环，不给玻璃 */
 .search:focus-within{border-color:var(--teal);background:var(--surface);box-shadow:0 0 0 3px rgba(14,154,154,.10)}
 .field input:focus{box-shadow:0 0 0 3px rgba(14,154,154,.10)}
+.study-status{position:absolute;left:24px;right:24px;bottom:104px;text-align:center;color:var(--muted);font-size:13px;min-height:20px}
+.study-nav{position:absolute;left:20px;right:20px;bottom:143px;display:flex;justify-content:space-between;gap:12px}
+.study-nav button{padding:5px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;font-size:12px;color:var(--muted);cursor:pointer}
+.study-controls{position:absolute;left:20px;right:20px;bottom:34px;display:flex;gap:8px}
+.study-controls .btn{height:44px;font-size:13px}
+.demo-note{font-size:11px;color:var(--muted);line-height:1.5}
+.empty-note{padding:22px 8px;color:var(--muted);font-size:13px;text-align:center}
 
 @media (max-width:900px){body{padding:28px 16px 56px}}
 
@@ -358,11 +332,11 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
   .scr.auto .live{animation:none;opacity:.9}
   .stack.dealing .card,.stack.dealing .behind{animation:none}
   .audio .bars i{animation:none}
-  .icn::after,.tab::after,.btn::after,.fab::after,.review::after,.deck::after,
-  .audio::after,.sel::after,.mode-btn::after,.sel-menu button::after{
+  .icn::after,.tab::after,.btn::after,.fab::after,.deck::after,
+  .audio::after,.mode-btn::after{
     transform:none;transition:opacity .12s linear;
   }
-  .btn:active,.fab:active,.review:active,
+  .btn:active,.fab:active,
   .icn:active,.tab:active,.deck:active,.sel:active,.mode-btn:active{transform:none}
   .audio:active{transform:translateX(-50%)}
 }
@@ -371,7 +345,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 <body>
 
 <header class="board-head">
-  <h1>知声卡</h1><span>EchoCards · Android</span>
+  <h1>知声卡</h1><span>EchoCards · Android 功能原型（语音为模拟）</span>
 </header>
 
 <main class="board">
@@ -443,73 +417,42 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       <div class="topbar"><h1>卡组</h1></div>
       <div class="body">
 
-        <button class="review" data-go="study" data-start-mode="0">
-          <span class="rev-l">
-            <span class="rev-title">今日复习</span>
-            <span class="rev-meta">12 张卡片 · 日语 N5 核心词汇</span>
-          </span>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
-        </button>
-
         <label class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
           <input type="text" placeholder="搜索卡组">
         </label>
 
         <div class="list-head">全部卡组</div>
-        <ul class="decks">
-          <li class="deck" data-go="detail">
-            <span class="mini"><span class="m-back"></span><span class="m-card"></span></span>
-            <span class="d-main">
-              <span class="d-name">日语 N5 核心词汇</span>
-              <span class="d-meta">240 张 · 已掌握 149</span>
-              <span class="d-bar"><i style="width:62%"></i></span>
-            </span>
-          </li>
-          <li class="deck" data-go="detail">
-            <span class="mini"><span class="m-back"></span><span class="m-card"></span></span>
-            <span class="d-main">
-              <span class="d-name">商务英语短语</span>
-              <span class="d-meta">86 张 · 已掌握 16</span>
-              <span class="d-bar"><i style="width:18%"></i></span>
-            </span>
-          </li>
-          <li class="deck" data-go="detail">
-            <span class="mini"><span class="m-back"></span><span class="m-card"></span></span>
-            <span class="d-main">
-              <span class="d-name">雅思口语 Part 2</span>
-              <span class="d-meta">45 张 · 未开始</span>
-              <span class="d-bar"><i style="width:0%"></i></span>
-            </span>
-          </li>
-          <li class="deck" data-go="detail">
-            <span class="mini"><span class="m-back"></span><span class="m-card"></span></span>
-            <span class="d-main">
-              <span class="d-name">德语 A1 日常用语</span>
-              <span class="d-meta">120 张 · 已掌握 120</span>
-              <span class="d-bar"><i style="width:100%"></i></span>
-            </span>
-          </li>
-          <li class="deck" data-go="detail">
-            <span class="mini"><span class="m-back"></span><span class="m-card"></span></span>
-            <span class="d-main">
-              <span class="d-name">韩语发音矫正</span>
-              <span class="d-meta">30 张 · 未开始</span>
-              <span class="d-bar"><i style="width:0%"></i></span>
-            </span>
-          </li>
-        </ul>
-
+        <p class="demo-note">交互原型使用演示卡组；Android 首次安装显示空状态。</p>
+        <ul class="decks" data-deck-list></ul>
+        <p class="empty-note" data-search-empty hidden>没有找到匹配的卡组</p>
+        <button class="btn ghost" type="button" data-deck-create>＋ 创建卡组</button>
       </div>
       <nav class="tabbar">
         <button class="tab on" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.2 12 4l8 6.2V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>
           首页
         </button>
-        <button class="tab" type="button">
+        <button class="tab" type="button" data-go="mine">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.6 20c1.1-3.6 4-5.4 7.4-5.4s6.3 1.8 7.4 5.4"/></svg>
           我的
         </button>
+      </nav>
+    </section>
+
+    <section class="scr" data-scr="mine">
+      <div class="topbar"><h1>我的</h1></div>
+      <div class="body">
+        <div class="list-head">学习设置</div>
+        <ul class="cards">
+          <li class="crow"><span class="c-l">默认学习模式</span><select data-default-mode aria-label="默认学习模式"><option value="0">手动学习</option><option value="1">自动跟读</option><option value="2">自动播放</option></select></li>
+          <li class="crow"><span class="c-l">朗读速度</span><select data-speech-rate aria-label="朗读速度"><option value="0.8">0.8×</option><option value="1" selected>1.0×</option><option value="1.2">1.2×</option><option value="1.5">1.5×</option></select></li>
+          <li class="crow"><span class="c-l">自动翻页延迟</span><select data-advance-delay aria-label="自动翻页延迟"><option value="0">立即</option><option value="600" selected>0.6 秒</option><option value="1000">1 秒</option><option value="2000">2 秒</option></select></li>
+        </ul>
+      </div>
+      <nav class="tabbar">
+        <button class="tab" type="button" data-go="home">首页</button>
+        <button class="tab on" type="button">我的</button>
       </nav>
     </section>
 
@@ -519,7 +462,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <button class="icn" data-go="home" type="button" aria-label="返回">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
         </button>
-        <button class="icn push" type="button" aria-label="编辑卡组">
+        <button class="icn push" type="button" aria-label="编辑卡组" data-deck-edit>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.9a2.1 2.1 0 0 1 3 3L8.4 18l-4 1 1-4z"/></svg>
         </button>
       </div>
@@ -527,34 +470,17 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       <div class="body">
         <div class="hero">
           <div class="hero-l">
-            <h2>日语 N5 核心词汇</h2>
-            <p>240 张卡片 · 已掌握 149</p>
-          </div>
-          <div class="ring-wrap">
-            <svg class="ring" viewBox="0 0 72 72">
-              <circle cx="36" cy="36" r="31.5" fill="none" stroke="var(--track)" stroke-width="6"/>
-              <circle cx="36" cy="36" r="31.5" fill="none" stroke="var(--teal)" stroke-width="6" stroke-linecap="round" stroke-dasharray="197.9" stroke-dashoffset="75.2"/>
-            </svg>
-            <span class="ring-num">62%</span>
+            <h2>初中物理知识点</h2>
+            <p data-deck-meta>3 张卡片 · 上次学到第 3 张</p>
+            <p data-deck-description hidden></p>
           </div>
         </div>
 
-        <div class="actions">
-          <button class="btn primary" data-go="study" data-start-mode="0" type="button">手动学习</button>
-          <button class="btn ghost" data-go="study" data-start-mode="1" type="button">自动跟读</button>
-        </div>
+        <div class="actions"><button class="btn primary" data-mode-open type="button">开始学习</button></div>
 
-        <div class="list-head">卡片 <span class="cnt">240</span></div>
-        <ul class="cards">
-          <li class="crow"><span class="c-l"><span class="c-f">天気</span><span class="c-r">てんき</span></span><span class="c-b">天气</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">出かける</span><span class="c-r">でかける</span></span><span class="c-b">出门</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">週末</span><span class="c-r">しゅうまつ</span></span><span class="c-b">周末</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">電車</span><span class="c-r">でんしゃ</span></span><span class="c-b">电车</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">宿題</span><span class="c-r">しゅくだい</span></span><span class="c-b">作业</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">忙しい</span><span class="c-r">いそがしい</span></span><span class="c-b">忙</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">静か</span><span class="c-r">しずか</span></span><span class="c-b">安静</span></li>
-          <li class="crow"><span class="c-l"><span class="c-f">友達</span><span class="c-r">ともだち</span></span><span class="c-b">朋友</span></li>
-        </ul>
+        <div class="list-head">卡片 <span class="cnt" data-card-count>3</span></div>
+        <ul class="cards" data-card-list></ul>
+        <p class="empty-note" data-card-empty hidden>这个卡组还没有知识点。先添加第一张卡片。</p>
       </div>
 
       <button class="fab" data-fab type="button" aria-label="添加卡片">
@@ -565,36 +491,55 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <div class="scrim" data-close></div>
         <div class="panel">
           <header class="p-head">
-            <h2>添加卡片</h2>
+            <h2 data-card-form-title>添加卡片</h2>
             <button class="icn" data-close type="button" aria-label="关闭">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg>
             </button>
           </header>
           <div class="p-body">
-            <label class="field"><span>正面</span><input type="text" placeholder="例如：天気"></label>
-            <label class="field"><span>背面</span><input type="text" placeholder="例如：天气"></label>
-            <label class="field"><span>读音</span><input class="mono" type="text" placeholder="てんき"></label>
-            <div class="field">
-              <span>标签</span>
-              <button class="sel" data-sel type="button">
-                <span data-sel-value>未分类</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
-              <div class="sel-menu" data-sel-menu>
-                <button data-opt type="button" class="on">未分类</button>
-                <button data-opt type="button">名词</button>
-                <button data-opt type="button">动词</button>
-                <button data-opt type="button">形容词</button>
-              </div>
-            </div>
+            <label class="field"><span>标题</span><input data-card-title type="text" placeholder="例如：惯性"></label>
+            <label class="field"><span>正文</span><textarea data-card-content placeholder="输入知识点正文"></textarea></label>
+            <label class="field"><span>跟读文本（可选）</span><textarea data-card-speech placeholder="留空时使用正文"></textarea></label>
+            <label class="field"><span>快速记忆点（可选）</span><textarea data-card-tip placeholder="显示在卡片背面"></textarea></label>
           </div>
           <footer class="p-foot">
             <button class="btn ghost" data-close type="button">取消</button>
-            <button class="btn primary" data-close type="button">保存</button>
+            <button class="btn ghost" data-card-delete type="button" hidden>删除</button>
+            <button class="btn primary" data-card-save type="button">保存</button>
           </footer>
         </div>
       </div>
+
     </section>
+
+    <div class="sheet" data-mode-sheet>
+      <div class="scrim" data-mode-close></div>
+      <div class="panel">
+        <header class="p-head"><h2>选择学习方式</h2></header>
+        <div class="p-body">
+          <button class="btn primary" data-mode-choice="0" type="button">手动学习</button>
+          <button class="btn ghost" data-mode-choice="1" type="button">自动跟读</button>
+          <button class="btn ghost" data-mode-choice="2" type="button">自动播放</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet" data-deck-sheet>
+      <div class="scrim" data-deck-close></div>
+      <div class="panel">
+        <header class="p-head"><h2 data-deck-form-title>创建卡组</h2></header>
+        <div class="p-body">
+          <label class="field"><span>卡组名称</span><input data-deck-title type="text" placeholder="例如：初中物理"></label>
+          <label class="field"><span>卡组说明（可选）</span><textarea data-deck-description placeholder="这个卡组学习什么？"></textarea></label>
+          <p class="demo-note">此页面为功能演示；保存只影响当前原型页面。</p>
+        </div>
+        <footer class="p-foot">
+          <button class="btn ghost" data-deck-close type="button">取消</button>
+          <button class="btn ghost" data-deck-delete type="button" hidden>删除</button>
+          <button class="btn primary" data-deck-save type="button">保存</button>
+        </footer>
+      </div>
+    </div>
 
     <!-- ============ 学习 ============ -->
     <section class="scr" data-scr="study">
@@ -609,29 +554,36 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13l-3.2-3.2"/><path d="M20 15H7l3.2 3.2"/></svg>
         </button>
 
-        <span class="counter"><b data-count>03</b> / <span data-total>12</span></span>
+        <span class="counter"><b data-count>03</b> / <span data-total>3</span></span>
       </div>
-
-      <div class="prog"><i data-prog style="width:25%"></i></div>
 
       <div class="study-body">
         <div class="stack" data-stack>
           <div class="behind"></div>
-          <div class="card" data-card>
+          <div class="card" data-card tabindex="0" role="button" aria-label="翻转卡片；左右方向键切换卡片">
             <div class="card-face front">
-              <span class="w" data-front-w>天気</span>
-              <span class="r" data-front-r>てんき</span>
+              <span class="w" data-front-w>惯性</span>
+              <span class="r" data-front-r>物体保持原来运动状态不变的性质叫作惯性。</span>
             </div>
             <div class="card-face back">
-              <span class="w" data-back-w>天气</span>
-              <span class="r" data-back-r>てんき</span>
+              <span class="w" data-back-w>快速记忆点</span>
+              <span class="r" data-back-r>不受力，就保持原来的状态。</span>
             </div>
-            <button class="audio" type="button" aria-label="播放发音">
+            <button class="audio" type="button" aria-label="播放朗读" data-audio>
               <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.4 9.3a3.9 3.9 0 0 1 0 5.4"/><path d="M18 6.6a7.4 7.4 0 0 1 0 10.8"/></svg>
               <span class="bars"><i></i><i></i><i></i></span>
             </button>
           </div>
         </div>
+      </div>
+      <div class="study-nav"><button data-previous type="button">‹ 上一张</button><button data-next type="button">下一张 ›</button></div>
+      <p class="study-status" data-status aria-live="polite">点击卡片查看快速记忆点 · 左滑下一张 / 右滑上一张</p>
+      <div class="study-controls" data-controls>
+        <button class="btn ghost" data-pause type="button">暂停</button>
+        <button class="btn ghost" data-replay type="button">重读</button>
+        <button class="btn ghost" data-skip type="button">跳过</button>
+        <button class="btn ghost" data-speed type="button">速度 1.0×</button>
+        <button class="btn primary" data-complete type="button">跟读 +25%</button>
       </div>
     </section>
 
@@ -641,28 +593,18 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 <script>
 (function () {
   var CARDS = [
-    { f: '天気',     r: 'てんき',       b: '天气' },
-    { f: '出かける', r: 'でかける',     b: '出门' },
-    { f: '週末',     r: 'しゅうまつ',   b: '周末' },
-    { f: '電車',     r: 'でんしゃ',     b: '电车' },
-    { f: '宿題',     r: 'しゅくだい',   b: '作业' },
-    { f: '忙しい',   r: 'いそがしい',   b: '忙' },
-    { f: '静か',     r: 'しずか',       b: '安静' },
-    { f: '友達',     r: 'ともだち',     b: '朋友' },
-    { f: '図書館',   r: 'としょかん',   b: '图书馆' },
-    { f: '食べる',   r: 'たべる',       b: '吃' },
-    { f: '飲む',     r: 'のむ',         b: '喝' },
-    { f: '新しい',   r: 'あたらしい',   b: '新' }
+    { title: '惯性', content: '物体保持原来运动状态不变的性质叫作惯性。', speechText: '', memoryTip: '不受力，就保持原来的状态。' },
+    { title: '牛顿第一定律', content: '一切物体在没有受到外力作用时，总保持静止状态或匀速直线运动状态。', speechText: '', memoryTip: '没有外力，运动状态不改变。' },
+    { title: '力的作用', content: '力可以改变物体的运动状态，也可以使物体发生形变。', speechText: '', memoryTip: '' }
   ];
 
   var MODES = [
-    { name: '手动学习', auto: false },
-    { name: '自动跟读', auto: true }
+    { name: '手动学习' },
+    { name: '自动跟读' },
+    { name: '自动播放' }
   ];
 
-  var AUDIO_MS  = 1450;
-  var HOLD_MS   = 1250;
-  var SETTLE_MS = 360;
+  var DEMO_AUDIO_MS = 1450;
 
   var tpl = document.getElementById('app-tpl');
 
@@ -685,84 +627,141 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     var backR     = root.querySelector('[data-back-r]');
     var count     = root.querySelector('[data-count]');
     var total     = root.querySelector('[data-total]');
-    var prog      = root.querySelector('[data-prog]');
     var audio     = root.querySelector('.audio');
     var modeBtn   = root.querySelector('[data-mode-toggle]');
     var modeLabel = root.querySelector('[data-mode-label]');
+    var status    = root.querySelector('[data-status]');
+    var controls  = root.querySelector('[data-controls]');
+    var pauseBtn  = root.querySelector('[data-pause]');
+    var replayBtn = root.querySelector('[data-replay]');
+    var skipBtn   = root.querySelector('[data-skip]');
+    var completeBtn = root.querySelector('[data-complete]');
+    var speedBtn = root.querySelector('[data-speed]');
+    var modeSheet = root.querySelector('[data-mode-sheet]');
+    var modeOpen  = root.querySelector('[data-mode-open]');
+    var search    = root.querySelector('.search input');
+    var deckList = root.querySelector('[data-deck-list]');
+    var cardList = root.querySelector('[data-card-list]');
+    var settings  = {
+      defaultMode: root.querySelector('[data-default-mode]'),
+      speechRate: root.querySelector('[data-speech-rate]'),
+      delay: root.querySelector('[data-advance-delay]')
+    };
 
-    var totalN = CARDS.length;
-    var idx  = Math.min(2, totalN - 1);
+    var decks = [{ title: '初中物理知识点', description: '', cards: CARDS.map(function (item) { return Object.assign({}, item); }), idx: 2 }];
+    var currentDeck = decks[0];
+    var cards = currentDeck.cards;
+    var idx = currentDeck.idx;
     var mode = 0;
-    var busy = false;
-    var autoToken = 0, autoT1 = null, autoT2 = null;
-    var drag = { on: false, sx: 0, sy: 0, dy: 0, axis: null, moved: false, t0: 0 };
+    var paused = false;
+    var phase = 'ready';
+    var coverage = 0;
+    var resumeAfterModeClose = false;
+    var token = 0;
+    var timers = [];
+    var editingCard = null;
+    var drag = { on: false, sx: 0, sy: 0, dx: 0, moved: false, t0: 0 };
 
-    function isAuto() { return MODES[mode].auto === true; }
+    function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+    function stopTasks() {
+      token += 1;
+      timers.forEach(clearTimeout);
+      timers = [];
+      audio.classList.remove('playing');
+      studyScr.classList.remove('auto');
+    }
+    function setStatus(message) { status.textContent = message; }
 
     function playAudio() {
+      if (!cards.length) return;
       audio.classList.add('playing');
-      clearTimeout(audio._t);
-      audio._t = setTimeout(function () { audio.classList.remove('playing'); }, AUDIO_MS);
+      phase = 'speaking';
+      setStatus('正在朗读（原型演示）');
+      var current = token;
+      later(function () {
+        if (current !== token) return;
+        audio.classList.remove('playing');
+        if (mode === 1) {
+          phase = 'listening';
+          setStatus('轮到你读了 · 跟读进度 0%（模拟）');
+          paint();
+        } else if (mode === 2) {
+          showTipAndAdvance();
+        } else {
+          phase = 'ready';
+          setStatus('朗读完成 · 点击卡片查看快速记忆点');
+        }
+      }, DEMO_AUDIO_MS / Number(settings.speechRate.value));
     }
 
     function paint() {
-      var c = CARDS[idx % totalN];
-      frontW.textContent = c.f;
-      frontR.textContent = c.r;
-      backW.textContent  = c.b;
-      backR.textContent  = c.r;
+      var c = cards[idx];
+      if (!c) return;
+      frontW.textContent = c.title;
+      frontR.textContent = c.content;
+      backW.textContent  = '快速记忆点';
+      backR.textContent  = c.memoryTip || '暂无快速记忆点';
       count.textContent = pad2(idx + 1);
-      total.textContent = totalN;
-      prog.style.width = ((idx + 1) / totalN * 100) + '%';
+      total.textContent = cards.length;
       modeLabel.textContent = MODES[mode].name;
-    }
-
-    function stopAuto() {
-      autoToken++;
-      if (autoT1) { clearTimeout(autoT1); autoT1 = null; }
-      if (autoT2) { clearTimeout(autoT2); autoT2 = null; }
-      studyScr.classList.remove('auto');
+      studyScr.classList.toggle('auto', mode !== 0 && !paused);
+      audio.style.display = mode === 0 ? '' : 'none';
+      controls.style.display = mode === 0 ? 'none' : 'flex';
+      replayBtn.style.display = mode === 1 ? '' : 'none';
+      skipBtn.style.display = mode === 1 ? '' : 'none';
+      speedBtn.style.display = mode === 2 ? '' : 'none';
+      speedBtn.textContent = '速度 ' + Number(settings.speechRate.value).toFixed(1) + '×';
+      completeBtn.style.display = mode === 1 && phase === 'listening' ? '' : 'none';
+      pauseBtn.textContent = paused ? '继续' : '暂停';
     }
 
     function runAuto() {
-      if (!isAuto()) return;
-      stopAuto();
-      var token = ++autoToken;
+      if (mode === 0 || paused || !cards.length) return;
+      stopTasks();
+      coverage = 0;
       studyScr.classList.add('auto');
-
+      card.classList.remove('flipped');
       playAudio();
-      autoT1 = setTimeout(function () {
-        if (token !== autoToken) return;
-        card.classList.add('flipped');
-        autoT2 = setTimeout(function () {
-          if (token !== autoToken) return;
-          nextWord(true);
-        }, HOLD_MS);
-      }, AUDIO_MS);
     }
 
-    function nextWord(auto) {
-      if (autoT1) { clearTimeout(autoT1); autoT1 = null; }
-      if (autoT2) { clearTimeout(autoT2); autoT2 = null; }
+    function showTipAndAdvance() {
+      if (paused) return;
+      phase = 'tip';
+      card.classList.add('flipped');
+      setStatus('快速记忆点');
+      paint();
+      var current = token;
+      later(function () {
+        if (current === token && studyScr.classList.contains('on')) move(1, true);
+      }, Number(settings.delay.value));
+    }
 
-      card.style.transition = 'transform .32s cubic-bezier(.2,.8,.2,1), opacity .32s ease';
-      card.style.transform = 'translateY(-640px) rotate(-15deg)';
+    function move(direction, fromAuto) {
+      if (!cards.length) return;
+      stopTasks();
+      phase = 'ready';
+      var distance = direction > 0 ? -460 : 460;
+      card.style.transition = 'transform .28s ease, opacity .28s ease';
+      card.style.transform = 'translateX(' + distance + 'px) rotate(' + (direction > 0 ? -8 : 8) + 'deg)';
       card.style.opacity = '0';
 
-      setTimeout(function () {
-        idx = (idx + 1) % totalN;
+      later(function () {
+        idx = (idx + direction + cards.length) % cards.length;
+        currentDeck.idx = idx;
         paint();
         card.classList.remove('flipped');
         card.style.transition = 'none';
-        card.style.transform = 'translateY(16px) scale(.975)';
+        card.style.transform = 'translateX(' + (-distance / 8) + 'px) scale(.975)';
         card.style.opacity = '0';
         requestAnimationFrame(function () {
-          card.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease';
+          card.style.transition = 'transform .28s ease, opacity .28s ease';
           card.style.transform = 'none';
           card.style.opacity = '1';
-          if (auto) setTimeout(function () { runAuto(); }, SETTLE_MS);
+          setStatus('点击卡片查看快速记忆点 · 左滑下一张 / 右滑上一张');
+          if ((fromAuto || mode !== 0) && !paused) later(runAuto, 320);
         });
-      }, 320);
+        renderCards();
+      }, 280);
     }
 
     function reDeal() {
@@ -775,23 +774,39 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     function setMode(target, animated) {
       target = ((target % MODES.length) + MODES.length) % MODES.length;
       var changed = target !== mode;
+      stopTasks();
       mode = target;
+      paused = false;
+      phase = 'ready';
+      coverage = 0;
       paint();
       card.classList.remove('flipped');
-
-      if (isAuto()) {
-        if (animated) reDeal();
-        runAuto();
-      } else {
-        stopAuto();
-        if (animated && changed) reDeal();
-      }
+      if (animated && changed) reDeal();
+      setStatus(mode === 1 ? '自动跟读演示：朗读后点击“跟读 +25%”' :
+        mode === 2 ? '自动播放演示：朗读后翻面并循环' :
+        '点击卡片查看快速记忆点 · 左滑下一张 / 右滑上一张');
+      if (mode !== 0 && studyScr.classList.contains('on')) runAuto();
     }
 
-    modeBtn.addEventListener('click', function () {
-      if (busy) return;
-      setMode(mode + 1, true);
-    });
+    function openModeSheet() {
+      var selected = studyScr.classList.contains('on') ? mode : Number(settings.defaultMode.value);
+      resumeAfterModeClose = studyScr.classList.contains('on') && mode !== 0 && !paused;
+      if (studyScr.classList.contains('on')) {
+        stopTasks();
+        if (resumeAfterModeClose) {
+          paused = true;
+          phase = 'paused';
+          setStatus('已暂停 · 选择学习方式');
+          paint();
+        }
+      }
+      Array.prototype.forEach.call(root.querySelectorAll('[data-mode-choice]'), function (el) {
+        el.classList.toggle('primary', Number(el.getAttribute('data-mode-choice')) === selected);
+        el.classList.toggle('ghost', Number(el.getAttribute('data-mode-choice')) !== selected);
+      });
+      modeSheet.classList.add('on');
+    }
+    modeBtn.addEventListener('click', openModeSheet);
 
     function resetCard() {
       card.style.transition = 'transform .30s cubic-bezier(.2,.8,.2,1), opacity .30s ease';
@@ -800,11 +815,9 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     }
 
     card.addEventListener('pointerdown', function (e) {
-      if (busy) return;
       if (e.target.closest('.audio')) return;
-      if (isAuto()) stopAuto();
-      drag.on = true; drag.moved = false; drag.axis = null;
-      drag.sx = e.clientX; drag.sy = e.clientY; drag.dy = 0;
+      drag.on = true; drag.moved = false;
+      drag.sx = e.clientX; drag.sy = e.clientY; drag.dx = 0;
       drag.t0 = Date.now();
       card.style.transition = 'none';
       try { card.setPointerCapture(e.pointerId); } catch (_) {}
@@ -812,17 +825,10 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
     card.addEventListener('pointermove', function (e) {
       if (!drag.on) return;
-      var dx = e.clientX - drag.sx;
-      drag.dy = e.clientY - drag.sy;
-      if (!drag.axis && (Math.abs(dx) > 7 || Math.abs(drag.dy) > 7)) {
-        drag.axis = Math.abs(dx) > Math.abs(drag.dy) ? 'x' : 'y';
-        drag.moved = true;
-      }
-      if (drag.axis === 'y') {
-        var dy = drag.dy < 0 ? drag.dy : drag.dy * 0.25;
-        card.style.transform = 'translateY(' + dy + 'px) rotate(' + Math.max(-9, Math.min(9, dy * 0.028)) + 'deg)';
-        card.style.opacity = Math.max(0.4, 1 - Math.abs(dy) / 520).toFixed(3);
-      }
+      drag.dx = e.clientX - drag.sx;
+      drag.moved = drag.moved || Math.abs(drag.dx) > 7 || Math.abs(e.clientY - drag.sy) > 7;
+      card.style.transform = 'translateX(' + drag.dx + 'px) rotate(' + Math.max(-9, Math.min(9, drag.dx * 0.028)) + 'deg)';
+      card.style.opacity = Math.max(0.4, 1 - Math.abs(drag.dx) / 520).toFixed(3);
     });
 
     function release() {
@@ -833,89 +839,297 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         resetCard();
         return;
       }
-      if (drag.axis === 'y' && drag.dy < -90) nextWord(false);
+      if (drag.dx < -90) move(1, false);
+      else if (drag.dx > 90) move(-1, false);
       else resetCard();
-      drag.dy = 0;
+      drag.dx = 0;
     }
 
     card.addEventListener('pointerup', release);
     window.addEventListener('pointerup', release);
     window.addEventListener('pointercancel', release);
     window.addEventListener('blur', release);
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); move(1, false); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); move(-1, false); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.classList.toggle('flipped'); }
+    });
+    root.querySelector('[data-previous]').addEventListener('click', function () { move(-1, false); });
+    root.querySelector('[data-next]').addEventListener('click', function () { move(1, false); });
 
     audio.addEventListener('click', function (e) {
       e.stopPropagation();
-      playAudio();
+      if (mode !== 0) return;
+      if (phase === 'speaking') {
+        stopTasks();
+        phase = 'paused';
+        setStatus('朗读已暂停 · 再次点击继续');
+      } else {
+        stopTasks();
+        playAudio();
+      }
+    });
+
+    pauseBtn.addEventListener('click', function () {
+      paused = !paused;
+      stopTasks();
+      if (paused) {
+        phase = 'paused';
+        setStatus('已暂停 · 点击继续重新朗读当前卡片');
+      } else {
+        runAuto();
+      }
+      paint();
+    });
+    replayBtn.addEventListener('click', function () { paused = false; runAuto(); paint(); });
+    skipBtn.addEventListener('click', function () { move(1, false); });
+    speedBtn.addEventListener('click', function () {
+      var rates = ['0.8', '1', '1.2', '1.5'];
+      settings.speechRate.value = rates[(rates.indexOf(settings.speechRate.value) + 1) % rates.length];
+      paint();
+    });
+    completeBtn.addEventListener('click', function () {
+      if (mode !== 1 || phase !== 'listening') return;
+      coverage = Math.min(100, coverage + 25);
+      setStatus('跟读进度 ' + coverage + '%（模拟）');
+      if (coverage === 100) {
+        phase = 'complete';
+        paint();
+        later(showTipAndAdvance, 320);
+      }
     });
 
     var screens = Array.prototype.slice.call(root.querySelectorAll('.scr'));
     function show(name) {
+      var wasStudy = studyScr.classList.contains('on');
       screens.forEach(function (s) {
         s.classList.toggle('on', s.getAttribute('data-scr') === name);
       });
       if (name === 'study') {
-        if (isAuto()) runAuto(); else stopAuto();
+        if (!wasStudy && mode !== 0 && !paused) runAuto();
       } else {
-        stopAuto();
+        stopTasks();
         resetCard();
+        if (name === 'detail') renderCards();
       }
     }
 
     Array.prototype.forEach.call(root.querySelectorAll('[data-go]'), function (el) {
       el.addEventListener('click', function () {
-        var ms = el.getAttribute('data-start-mode');
-        if (ms !== null) setMode(parseInt(ms, 10), false);
         show(el.getAttribute('data-go'));
       });
     });
 
-    var sheet  = root.querySelector('[data-sheet]');
-    var fab    = root.querySelector('[data-fab]');
-    var sel    = root.querySelector('[data-sel]');
-    var menu   = root.querySelector('[data-sel-menu]');
-    var selVal = root.querySelector('[data-sel-value]');
+    var sheet = root.querySelector('[data-sheet]');
+    var deckSheet = root.querySelector('[data-deck-sheet]');
+    var deckForm = {
+      title: root.querySelector('[data-deck-title]'),
+      description: root.querySelector('[data-deck-description]'),
+      deleteButton: root.querySelector('[data-deck-delete]')
+    };
+    var cardForm = {
+      title: root.querySelector('[data-card-title]'),
+      content: root.querySelector('[data-card-content]'),
+      speechText: root.querySelector('[data-card-speech]'),
+      memoryTip: root.querySelector('[data-card-tip]'),
+      deleteButton: root.querySelector('[data-card-delete]')
+    };
+    var editingDeck = null;
 
-    function closeMenu() { menu.classList.remove('on'); }
-
-    function openMenu() {
-      var r = sel.getBoundingClientRect();
-      menu.style.left  = r.left + 'px';
-      menu.style.top   = (r.bottom + 6) + 'px';
-      menu.style.width = r.width + 'px';
-      menu.classList.add('on');
+    function renderDecks() {
+      deckList.replaceChildren();
+      var query = search.value.trim().toLocaleLowerCase('zh-CN');
+      var visible = decks.filter(function (d) { return d.title.toLocaleLowerCase('zh-CN').includes(query); });
+      visible.forEach(function (deck) {
+        var row = document.createElement('li');
+        row.className = 'deck';
+        row.tabIndex = 0;
+        var name = document.createElement('span');
+        name.className = 'd-main';
+        var title = document.createElement('span');
+        title.className = 'd-name';
+        title.textContent = deck.title;
+        var meta = document.createElement('span');
+        meta.className = 'd-meta';
+        meta.textContent = deck.cards.length + ' 张 · ' + (deck.cards.length ? '上次学到第 ' + (deck.idx + 1) + ' 张' : '尚未开始');
+        name.append(title, meta);
+        row.append(name);
+        row.addEventListener('click', function () { openDeck(deck); });
+        row.addEventListener('keydown', function (e) { if (e.key === 'Enter') openDeck(deck); });
+        deckList.append(row);
+      });
+      var empty = root.querySelector('[data-search-empty]');
+      empty.hidden = visible.length !== 0;
+      empty.textContent = decks.length ? '没有找到匹配的卡组' : '还没有卡组，创建第一个卡组';
     }
 
-    fab.addEventListener('click', function () { sheet.classList.add('on'); });
-
-    Array.prototype.forEach.call(root.querySelectorAll('[data-close]'), function (b) {
-      b.addEventListener('click', function () {
-        sheet.classList.remove('on');
-        closeMenu();
-      });
-    });
-
-    sel.addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (menu.classList.contains('on')) closeMenu(); else openMenu();
-    });
-
-    Array.prototype.forEach.call(menu.querySelectorAll('[data-opt]'), function (o) {
-      o.addEventListener('click', function () {
-        selVal.textContent = o.textContent;
-        Array.prototype.forEach.call(menu.querySelectorAll('[data-opt]'), function (x) {
-          x.classList.remove('on');
+    function renderCards() {
+      cardList.replaceChildren();
+      root.querySelector('[data-card-count]').textContent = cards.length;
+      root.querySelector('[data-card-empty]').hidden = cards.length !== 0;
+      modeOpen.textContent = cards.length ? '开始学习' : '添加第一张卡片';
+      cards.forEach(function (item, position) {
+        var row = document.createElement('li');
+        row.className = 'crow';
+        var main = document.createElement('button');
+        main.className = 'card-row-main';
+        main.type = 'button';
+        main.textContent = item.title + ' · ' + item.content;
+        main.addEventListener('click', function () { openCardForm(position); });
+        var up = document.createElement('button');
+        up.className = 'reorder';
+        up.type = 'button';
+        up.setAttribute('aria-label', '上移 ' + item.title);
+        up.textContent = '↑';
+        up.disabled = position === 0;
+        up.addEventListener('click', function () {
+          var previous = cards[position - 1];
+          cards[position - 1] = cards[position];
+          cards[position] = previous;
+          if (idx === position) idx -= 1;
+          else if (idx === position - 1) idx += 1;
+          currentDeck.idx = idx;
+          renderCards();
+          paint();
         });
-        o.classList.add('on');
-        closeMenu();
+        var down = document.createElement('button');
+        down.className = 'reorder';
+        down.type = 'button';
+        down.setAttribute('aria-label', '下移 ' + item.title);
+        down.textContent = '↓';
+        down.disabled = position === cards.length - 1;
+        down.addEventListener('click', function () {
+          var next = cards[position + 1];
+          cards[position + 1] = cards[position];
+          cards[position] = next;
+          if (idx === position) idx += 1;
+          else if (idx === position + 1) idx -= 1;
+          currentDeck.idx = idx;
+          renderCards();
+          paint();
+        });
+        row.append(main, up, down);
+        cardList.append(row);
+      });
+      root.querySelector('[data-deck-meta]').textContent = cards.length + ' 张卡片 · ' +
+        (cards.length ? '上次学到第 ' + (idx + 1) + ' 张' : '尚未开始');
+      renderDecks();
+    }
+
+    function openDeck(deck) {
+      currentDeck = deck;
+      cards = deck.cards;
+      idx = Math.max(0, Math.min(deck.idx, cards.length - 1));
+      root.querySelector('.hero h2').textContent = deck.title;
+      var description = root.querySelector('[data-deck-description]');
+      description.textContent = deck.description;
+      description.hidden = !deck.description;
+      renderCards();
+      if (cards.length) paint();
+      show('detail');
+    }
+
+    function openCardForm(position) {
+      editingCard = position;
+      var item = position === null ? { title: '', content: '', speechText: '', memoryTip: '' } : cards[position];
+      root.querySelector('[data-card-form-title]').textContent = position === null ? '添加卡片' : '编辑卡片';
+      cardForm.title.value = item.title;
+      cardForm.content.value = item.content;
+      cardForm.speechText.value = item.speechText;
+      cardForm.memoryTip.value = item.memoryTip;
+      cardForm.deleteButton.hidden = position === null;
+      sheet.classList.add('on');
+    }
+
+    root.querySelector('[data-fab]').addEventListener('click', function () { openCardForm(null); });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-close]'), function (el) {
+      el.addEventListener('click', function () { sheet.classList.remove('on'); });
+    });
+    root.querySelector('[data-card-save]').addEventListener('click', function () {
+      var title = cardForm.title.value.trim();
+      var content = cardForm.content.value.trim();
+      if (!title || !content) { alert('标题和正文不能为空'); return; }
+      var item = { title: title, content: content, speechText: cardForm.speechText.value.trim(), memoryTip: cardForm.memoryTip.value.trim() };
+      if (editingCard === null) cards.push(item); else cards[editingCard] = item;
+      sheet.classList.remove('on');
+      renderCards();
+      paint();
+    });
+    cardForm.deleteButton.addEventListener('click', function () {
+      if (editingCard === null || !confirm('确定删除这张卡片吗？')) return;
+      cards.splice(editingCard, 1);
+      if (editingCard < idx) idx -= 1;
+      idx = Math.max(0, Math.min(idx, cards.length - 1));
+      currentDeck.idx = idx;
+      sheet.classList.remove('on');
+      renderCards();
+      if (cards.length) paint();
+    });
+
+    function openDeckForm(deck) {
+      editingDeck = deck;
+      root.querySelector('[data-deck-form-title]').textContent = deck ? '编辑卡组' : '创建卡组';
+      deckForm.title.value = deck ? deck.title : '';
+      deckForm.description.value = deck ? deck.description : '';
+      deckForm.deleteButton.hidden = !deck;
+      deckSheet.classList.add('on');
+    }
+    root.querySelector('[data-deck-create]').addEventListener('click', function () { openDeckForm(null); });
+    root.querySelector('[data-deck-edit]').addEventListener('click', function () { openDeckForm(currentDeck); });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-deck-close]'), function (el) {
+      el.addEventListener('click', function () { deckSheet.classList.remove('on'); });
+    });
+    root.querySelector('[data-deck-save]').addEventListener('click', function () {
+      var title = deckForm.title.value.trim();
+      if (!title) { alert('卡组名称不能为空'); return; }
+      if (editingDeck) {
+        editingDeck.title = title;
+        editingDeck.description = deckForm.description.value.trim();
+        root.querySelector('.hero h2').textContent = title;
+        root.querySelector('[data-deck-description]').textContent = editingDeck.description;
+        root.querySelector('[data-deck-description]').hidden = !editingDeck.description;
+      } else {
+        decks.push({ title: title, description: deckForm.description.value.trim(), cards: [], idx: 0 });
+      }
+      deckSheet.classList.remove('on');
+      renderDecks();
+    });
+    deckForm.deleteButton.addEventListener('click', function () {
+      if (!editingDeck || !confirm('确定删除卡组及其中全部卡片吗？')) return;
+      decks.splice(decks.indexOf(editingDeck), 1);
+      deckSheet.classList.remove('on');
+      renderDecks();
+      show('home');
+    });
+
+    search.addEventListener('input', renderDecks);
+    modeOpen.addEventListener('click', function () {
+      if (cards.length) openModeSheet(); else openCardForm(null);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-mode-close]'), function (el) {
+      el.addEventListener('click', function () {
+        modeSheet.classList.remove('on');
+        if (resumeAfterModeClose) {
+          paused = false;
+          runAuto();
+          paint();
+        }
+        resumeAfterModeClose = false;
+      });
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-mode-choice]'), function (el) {
+      el.addEventListener('click', function () {
+        modeSheet.classList.remove('on');
+        resumeAfterModeClose = false;
+        setMode(Number(el.getAttribute('data-mode-choice')), true);
+        if (!studyScr.classList.contains('on')) show('study');
       });
     });
 
-    document.addEventListener('click', function (e) {
-      if (!sel.contains(e.target) && !menu.contains(e.target)) closeMenu();
-    });
-
+    renderDecks();
+    renderCards();
     paint();
-    setMode(0, false);
+    setMode(Number(settings.defaultMode.value), false);
     show(start);
   }
 })();

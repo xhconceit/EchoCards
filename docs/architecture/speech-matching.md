@@ -74,7 +74,7 @@ fun getTargetText(card: Card): String =
     card.speechText?.trim()?.takeIf { it.isNotEmpty() } ?: card.content.trim()
 ```
 
-标题和补充解释默认不参与匹配。
+标题和快速记忆点不参与匹配。第一版固定使用普通话（`zh-CN`）。
 
 对于公式、符号和特殊缩写，应在卡片中填写适合朗读的 `speechText`。
 
@@ -160,7 +160,7 @@ interface TextNormalizer {
 - 英文缩写
 - 数学公式
 
-卡片编辑页面后续应提供“试听跟读文本”功能。
+卡片编辑底部弹层应提供“试听跟读文本”功能。
 
 ## 7. 匹配原则
 

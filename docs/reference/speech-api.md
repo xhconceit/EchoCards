@@ -85,6 +85,8 @@ interface SpeechCapabilityService {
 
 只有用户进入自动跟读功能后，才请求麦克风权限。
 
+第一版语言固定为 `zh-CN`。自动播放只调用朗读和音频焦点接口，不请求麦克风权限。
+
 ## 5. 朗读接口
 
 ```kotlin
@@ -124,6 +126,8 @@ interface SpeechPlayer {
 - `stop()` 不能产生 `completed` 事件。
 - 所有事件都必须携带原始 `operationId`。
 - 同一个操作最多产生一次终止事件：`completed`、`stopped` 或 `error`。
+
+手动模式的“暂停 / 继续”由 Learning Engine 将文本分段实现：暂停时调用 `stop()` 并记住当前分段，继续时从该分段开头发起新的 `SpeakRequest`。适配器不承诺在一个句子中间精确恢复。
 
 ## 6. 识别接口
 
