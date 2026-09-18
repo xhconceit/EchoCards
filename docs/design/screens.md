@@ -11,11 +11,13 @@ flowchart TD
     Deck[卡组详情]
     DeckSheet[卡组编辑弹层]
     CardSheet[卡片编辑弹层]
+    ImportSheet[导入预览弹层]
     ModeSheet[学习模式选择]
     Learn[学习页面]
 
     Home --> Deck
     Home --> DeckSheet
+    Home --> ImportSheet
     Home --> Mine
     Deck --> CardSheet
     Deck --> ModeSheet
@@ -45,6 +47,7 @@ Learn/{deckId}?mode={mode}
 - 按名称筛选的搜索框
 - 卡组列表
 - 创建卡组入口
+- 导入卡组入口（JSON 文件）
 - “首页 / 我的”底部导航
 
 卡组项显示：
@@ -55,6 +58,8 @@ Learn/{deckId}?mode={mode}
 ```
 
 不显示今日复习、已掌握数量或掌握率。首次安装没有示例数据，显示空状态和“创建第一个卡组”。加载失败时显示原因和重试按钮。
+
+点击“导入卡组”打开 Android 系统文件选择器。解析成功后弹出预览：文件名、可编辑的卡组名称、卡片数量，以及“取消”和“导入”按钮。解析错误显示字段名或卡片序号与原因，不写入任何内容。已有相同内容时显示提示，并把主按钮改为“查看已有卡组”；同名但内容不同则提示会新增卡组，仍可导入。导入成功后进入新卡组详情。
 
 ## 3. 我的
 

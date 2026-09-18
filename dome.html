@@ -87,6 +87,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .decks{list-style:none}
 .decks:not(:empty){margin-top:18px}
 .decks + .empty-note + [data-deck-create]{width:100%;margin-top:18px}
+[data-import-open]{width:100%;margin-top:10px}
 .deck{display:flex;align-items:center;gap:15px;padding:14px;margin-bottom:10px;border:1px solid var(--border);border-radius:16px;background:var(--surface);cursor:pointer}
 .deck:last-child{margin-bottom:0}
 .d-main{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -146,6 +147,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .sheet.centered > .panel{left:24px;right:24px;top:50%;bottom:auto;max-height:calc(100% - 48px);border-radius:20px;transform:translateY(-50%);box-shadow:0 18px 54px rgba(0,0,0,.24)}
 .confirm-panel .p-body{padding-top:4px;padding-bottom:20px}
 .confirm-message{color:var(--muted);font-size:14px;line-height:1.65}
+.import-warning{color:#8A6114;font-size:13px;line-height:1.5}
 .mode-options{gap:10px;padding-top:8px;padding-bottom:22px}
 .mode-options .btn{flex:none;width:100%;height:48px}
 .field{display:flex;flex-direction:column;gap:7px}
@@ -153,6 +155,10 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .field input{width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:#FBFCFC;font:inherit;font-size:15px;color:var(--fg);outline:none;transition:border-color .16s ease,background .16s ease,box-shadow .16s ease}
 .field input:focus{border-color:var(--teal);background:var(--surface)}
 .crow select{max-width:48%;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;font-size:13px;color:var(--fg)}
+.preview{flex:none;height:34px;padding:0 12px;border:1px solid #D9DEDE;border-radius:10px;background:var(--surface);color:var(--teal-deep);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.preview:active{background:#ECEFEF}
+.preview-status{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.5;min-height:18px}
+.preview-status:empty{display:none}
 .card-row{position:relative;overflow:hidden;cursor:grab;touch-action:none;transition:opacity .18s ease,box-shadow .18s ease}
 .card-row:active{cursor:grabbing}
 .card-row-main{position:relative;z-index:2;flex:1;min-width:0;width:100%;height:100%;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:0;background:var(--bg);font:inherit;color:var(--fg);cursor:inherit;transition:transform .18s ease}
@@ -262,7 +268,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 <body>
 
 <header class="board-head">
-  <h1>知声卡</h1><span>EchoCards · Android 功能原型（语音为模拟）</span>
+  <h1>知声卡</h1><span>EchoCards · Android 功能原型（语音为浏览器 TTS，跟读识别为模拟）</span>
 </header>
 
 <main class="board">
@@ -342,6 +348,8 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <ul class="decks" data-deck-list></ul>
         <p class="empty-note" data-search-empty hidden>没有找到匹配的卡组</p>
         <button class="btn ghost" type="button" data-deck-create>＋ 创建卡组</button>
+        <button class="btn ghost" type="button" data-import-open>↑ 导入卡组（JSON）</button>
+        <input data-import-file type="file" accept=".json,application/json" hidden>
       </div>
       <nav class="tabbar">
         <button class="tab on" type="button">
@@ -361,13 +369,20 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <div class="list-head">学习设置</div>
         <ul class="cards">
           <li class="crow"><span class="c-l">默认学习模式</span><select data-default-mode aria-label="默认学习模式"><option value="0">手动学习</option><option value="1">自动跟读</option><option value="2">自动播放</option></select></li>
-          <li class="crow"><span class="c-l">朗读速度</span><select data-speech-rate aria-label="朗读速度"><option value="0.8">0.8×</option><option value="1" selected>1.0×</option><option value="1.2">1.2×</option><option value="1.5">1.5×</option></select></li>
+          <li class="crow"><span class="c-l">朗读速度</span><button class="preview" type="button" data-speech-preview>试听</button><select data-speech-rate aria-label="朗读速度"><option value="0.5">0.5×</option><option value="0.8">0.8×</option><option value="1" selected>1.0×</option><option value="1.2">1.2×</option><option value="1.5">1.5×</option><option value="2">2.0×</option></select></li>
           <li class="crow"><span class="c-l">自动翻页延迟</span><select data-advance-delay aria-label="自动翻页延迟"><option value="0">立即</option><option value="600" selected>0.6 秒</option><option value="1000">1 秒</option><option value="2000">2 秒</option></select></li>
         </ul>
+        <p class="preview-status" data-preview-status aria-live="polite"></p>
       </div>
       <nav class="tabbar">
-        <button class="tab" type="button" data-go="home">首页</button>
-        <button class="tab on" type="button">我的</button>
+        <button class="tab" type="button" data-go="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.2 12 4l8 6.2V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>
+          首页
+        </button>
+        <button class="tab on" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.6 20c1.1-3.6 4-5.4 7.4-5.4s6.3 1.8 7.4 5.4"/></svg>
+          我的
+        </button>
       </nav>
     </section>
 
@@ -436,6 +451,20 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       </div>
     </div>
 
+    <div class="sheet centered" data-mic-sheet role="dialog" aria-modal="true" aria-label="麦克风权限说明">
+      <div class="scrim" data-mic-cancel></div>
+      <div class="panel">
+        <header class="p-head"><h2>使用麦克风跟读</h2></header>
+        <div class="p-body">
+          <p class="confirm-message">自动跟读会用麦克风听取你的朗读，用于判断是否读完当前卡片。录音仅在本机处理，不会上传。首次使用需要允许麦克风权限。</p>
+        </div>
+        <footer class="p-foot">
+          <button class="btn ghost" type="button" data-mic-cancel>取消</button>
+          <button class="btn primary" type="button" data-mic-continue>继续</button>
+        </footer>
+      </div>
+    </div>
+
     <div class="sheet" data-deck-sheet>
       <div class="scrim" data-deck-close></div>
       <div class="panel">
@@ -449,6 +478,23 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
           <button class="btn ghost" data-deck-close type="button">取消</button>
           <button class="btn ghost" data-deck-delete type="button" hidden>删除</button>
           <button class="btn primary" data-deck-save type="button">保存</button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="sheet centered" data-import-sheet role="dialog" aria-modal="true" aria-label="导入卡组">
+      <div class="scrim" data-import-close></div>
+      <div class="panel">
+        <header class="p-head"><h2>导入卡组</h2></header>
+        <div class="p-body">
+          <p class="confirm-message" data-import-summary></p>
+          <label class="field"><span>卡组名称</span><input data-import-title type="text"></label>
+          <p class="import-warning" data-import-warning role="status" hidden></p>
+          <p class="field-error" data-import-error role="alert" hidden></p>
+        </div>
+        <footer class="p-foot">
+          <button class="btn ghost" type="button" data-import-close>取消</button>
+          <button class="btn primary" type="button" data-import-save>导入</button>
         </footer>
       </div>
     </div>
@@ -510,6 +556,11 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <button class="btn ghost" data-replay type="button">重读</button>
         <button class="btn ghost" data-speed type="button">速度 1.0×</button>
       </div>
+      <div class="study-controls" data-error-controls style="display:none">
+        <button class="btn ghost" data-error-retry type="button">重试</button>
+        <button class="btn ghost" data-error-settings type="button">打开系统设置</button>
+        <button class="btn ghost" data-error-manual type="button">切换手动学习</button>
+      </div>
     </section>
 
   </div>
@@ -562,10 +613,23 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     var pauseBtn  = root.querySelector('[data-pause]');
     var replayBtn = root.querySelector('[data-replay]');
     var speedBtn = root.querySelector('[data-speed]');
+    var errorControls = root.querySelector('[data-error-controls]');
+    var errorRetry = root.querySelector('[data-error-retry]');
+    var errorSettings = root.querySelector('[data-error-settings]');
+    var errorManual = root.querySelector('[data-error-manual]');
     var modeSheet = root.querySelector('[data-mode-sheet]');
     var modeOpen  = root.querySelector('[data-mode-open]');
+    var micSheet = root.querySelector('[data-mic-sheet]');
+    var micContinue = root.querySelector('[data-mic-continue]');
+    var previewBtn = root.querySelector('[data-speech-preview]');
+    var previewStatus = root.querySelector('[data-preview-status]');
     var search    = root.querySelector('.search input');
     var deckList = root.querySelector('[data-deck-list]');
+    var importFile = root.querySelector('[data-import-file]');
+    var importSheet = root.querySelector('[data-import-sheet]');
+    var importTitle = root.querySelector('[data-import-title]');
+    var importedCards = null;
+    var duplicateDeck = null;
     var cardList = root.querySelector('[data-card-list]');
     var settings  = {
       defaultMode: root.querySelector('[data-default-mode]'),
@@ -573,7 +637,40 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       delay: root.querySelector('[data-advance-delay]')
     };
 
-    var decks = [{ title: '初中物理知识点', description: '', cards: CARDS.map(function (item) { return Object.assign({}, item); }), idx: 2 }];
+    var STORE_KEY = 'echocards.prototype.v1';
+    var ttsAvailable = ('speechSynthesis' in window);
+    var micExplained = false;
+    function loadState() {
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        if (!raw) return null;
+        var data = JSON.parse(raw);
+        return (data && Array.isArray(data.decks)) ? data : null;
+      } catch (_) { return null; }
+    }
+    function persist() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          decks: decks,
+          settings: {
+            defaultMode: settings.defaultMode.value,
+            speechRate: settings.speechRate.value,
+            delay: settings.delay.value,
+            micExplained: micExplained
+          }
+        }));
+      } catch (_) {}
+    }
+    var stored = loadState();
+    if (stored && stored.settings) {
+      var s = stored.settings;
+      if (s.defaultMode !== undefined) settings.defaultMode.value = String(s.defaultMode);
+      if (s.speechRate !== undefined) settings.speechRate.value = String(s.speechRate);
+      if (s.delay !== undefined) settings.delay.value = String(s.delay);
+      micExplained = Boolean(s.micExplained);
+    }
+
+    var decks = stored ? stored.decks : [{ title: '初中物理知识点', description: '', cards: CARDS.map(function (item) { return Object.assign({}, item); }), idx: 2 }];
     var currentDeck = decks[0];
     var cards = currentDeck.cards;
     var idx = currentDeck.idx;
@@ -597,30 +694,58 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       timers = [];
       audio.classList.remove('playing');
       studyScr.classList.remove('auto');
+      if (ttsAvailable) { try { window.speechSynthesis.cancel(); } catch (_) {} }
     }
     function setStatus(message) { status.textContent = message; }
 
+    function speakText(text, fallbackMs, onDone) {
+      if (ttsAvailable && text) {
+        try {
+          var u = new SpeechSynthesisUtterance(text);
+          u.lang = 'zh-CN';
+          u.rate = Number(settings.speechRate.value) || 1;
+          var done = false;
+          u.onend = function () { if (!done) { done = true; onDone(); } };
+          u.onerror = function () { if (!done) { done = true; onDone(); } };
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
+          return;
+        } catch (_) {}
+      }
+      later(onDone, fallbackMs);
+    }
+
     function playAudio() {
       if (!cards.length) return;
+      var c = cards[idx];
+      var text = (c.speechText && c.speechText.trim()) || c.content || '';
       audio.classList.add('playing');
       phase = 'speaking';
-      setStatus('正在朗读（原型演示）');
+      setStatus(mode === 2 ? '正在朗读' : '正在朗读，请先听一遍');
       var current = token;
-      later(function () {
+      speakText(text, DEMO_AUDIO_MS / Number(settings.speechRate.value), function () {
         if (current !== token) return;
         audio.classList.remove('playing');
         if (mode === 1) {
           phase = 'listening';
           setStatus('轮到你读了');
           paint();
-          later(showTipAndAdvance, 2200);
+          later(showConfirming, 2200);
         } else if (mode === 2) {
           showTipAndAdvance();
         } else {
           phase = 'ready';
           setStatus('朗读完成');
         }
-      }, DEMO_AUDIO_MS / Number(settings.speechRate.value));
+      });
+    }
+
+    function showConfirming() {
+      if (paused || mode !== 1 || phase !== 'listening') return;
+      phase = 'confirming';
+      setStatus('正在确认');
+      paint();
+      later(showTipAndAdvance, 900);
     }
 
     function paint() {
@@ -634,9 +759,11 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       count.textContent = pad2(idx + 1);
       total.textContent = cards.length;
       modeLabel.textContent = MODES[mode].name;
-      studyScr.classList.toggle('auto', mode !== 0 && !paused);
+      var isError = phase === 'error';
+      studyScr.classList.toggle('auto', mode !== 0 && !paused && !isError);
       audio.style.display = mode === 0 ? '' : 'none';
-      controls.style.display = mode === 0 ? 'none' : 'flex';
+      controls.style.display = (mode === 0 || isError) ? 'none' : 'flex';
+      errorControls.style.display = isError ? 'flex' : 'none';
       replayBtn.style.display = mode === 1 ? '' : 'none';
       speedBtn.style.display = mode === 2 ? '' : 'none';
       speedBtn.textContent = '速度 ' + Number(settings.speechRate.value).toFixed(1) + '×';
@@ -644,7 +771,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     }
 
     function runAuto() {
-      if (mode === 0 || paused || !cards.length) return;
+      if (mode === 0 || paused || !cards.length || phase === 'error') return;
       stopTasks();
       studyScr.classList.add('auto');
       card.classList.remove('flipped');
@@ -678,6 +805,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       later(function () {
         idx = (idx + direction + cards.length) % cards.length;
         currentDeck.idx = idx;
+        persist();
         card.classList.remove('flipped');
         paint();
         cardMotion.style.transition = 'none';
@@ -720,9 +848,57 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       if (mode !== 0 && studyScr.classList.contains('on')) runAuto();
     }
 
+    var pendingProceed = null;
+    function requestMode(target, animated) {
+      if (target === 1) {
+        var proceed = function (granted) {
+          if (granted) {
+            setMode(1, animated);
+            if (!studyScr.classList.contains('on')) show('study');
+            cardFlipper.focus();
+          } else {
+            enterFollowAlongError('无法使用麦克风：权限被拒绝');
+          }
+        };
+        if (!micExplained) {
+          pendingProceed = proceed;
+          micSheet.classList.add('on');
+          micContinue.focus();
+        } else {
+          requestMicPermission(proceed);
+        }
+        return;
+      }
+      setMode(target, animated);
+      if (!studyScr.classList.contains('on')) show('study');
+      cardFlipper.focus();
+    }
+    function requestMicPermission(onResult) {
+      if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+          stream.getTracks().forEach(function (track) { track.stop(); });
+          onResult(true);
+        }).catch(function () { onResult(false); });
+      } else {
+        onResult(true);
+      }
+    }
+    function enterFollowAlongError(message) {
+      stopTasks();
+      transitioning = false;
+      resetCard();
+      mode = 1;
+      paused = false;
+      phase = 'error';
+      card.classList.remove('flipped');
+      if (!studyScr.classList.contains('on')) show('study');
+      setStatus(message);
+      paint();
+    }
+
     function openModeSheet() {
       var selected = studyScr.classList.contains('on') ? mode : Number(settings.defaultMode.value);
-      resumeAfterModeClose = studyScr.classList.contains('on') && mode !== 0 && !paused;
+      resumeAfterModeClose = studyScr.classList.contains('on') && mode !== 0 && !paused && phase !== 'error';
       if (studyScr.classList.contains('on')) {
         stopTasks();
         transitioning = false;
@@ -832,7 +1008,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     });
     replayBtn.addEventListener('click', function () { paused = false; runAuto(); paint(); });
     speedBtn.addEventListener('click', function () {
-      var rates = ['0.8', '1', '1.2', '1.5'];
+      var rates = ['0.5', '0.8', '1', '1.2', '1.5', '2'];
       settings.speechRate.value = rates[(rates.indexOf(settings.speechRate.value) + 1) % rates.length];
       paint();
     });
@@ -844,7 +1020,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         s.classList.toggle('on', s.getAttribute('data-scr') === name);
       });
       if (name === 'study') {
-        if (!wasStudy && mode !== 0 && !paused) runAuto();
+        if (!wasStudy && mode !== 0 && !paused && phase !== 'error') runAuto();
       } else {
         stopTasks();
         transitioning = false;
@@ -1032,6 +1208,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       cards.splice(target, 0, cards.splice(from, 1)[0]);
       idx = cards.indexOf(current);
       currentDeck.idx = idx;
+      persist();
       renderCards();
       paint();
     }
@@ -1046,6 +1223,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         if (currentPosition < idx) idx -= 1;
         idx = Math.max(0, Math.min(idx, cards.length - 1));
         currentDeck.idx = idx;
+        persist();
         renderCards();
         if (cards.length) paint();
       }, '删除', true);
@@ -1130,6 +1308,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       else cards.splice.apply(cards, [0, cards.length].concat(sortDrag.original));
       idx = cards.indexOf(current);
       currentDeck.idx = idx;
+      persist();
       sortDrag = null;
       renderCards();
       paint();
@@ -1181,6 +1360,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       closeForm('card', true);
       renderCards();
       paint();
+      persist();
     });
     function openDeckForm(deck) {
       sheetOpener = document.activeElement;
@@ -1195,6 +1375,119 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       deckForm.title.focus();
     }
     root.querySelector('[data-deck-create]').addEventListener('click', function () { openDeckForm(null); });
+    function parseImportJson(text) {
+      var data;
+      try { data = JSON.parse(text.replace(/^\uFEFF/, '')); }
+      catch (_) { throw new Error('JSON 格式错误，请检查文件内容'); }
+      if (!data || Array.isArray(data) || typeof data !== 'object') throw new Error('顶层必须是卡组对象');
+      function required(value, name) {
+        if (typeof value !== 'string' || !value.trim()) throw new Error(name + '必须是非空字符串');
+        return value.trim();
+      }
+      function optional(value, name) {
+        if (value === undefined || value === null) return '';
+        if (typeof value !== 'string') throw new Error(name + '必须是字符串');
+        return value.trim();
+      }
+      var title = required(data.title, '卡组 title');
+      var description = optional(data.description, '卡组 description');
+      if (!Array.isArray(data.cards) || !data.cards.length) throw new Error('cards 必须是非空数组');
+      if (data.cards.length > 1000) throw new Error('最多导入 1000 张卡片');
+      var imported = data.cards.map(function (card, i) {
+        var name = '第 ' + (i + 1) + ' 张卡片的 ';
+        if (!card || Array.isArray(card) || typeof card !== 'object') throw new Error('第 ' + (i + 1) + ' 张卡片必须是对象');
+        return {
+          title: required(card.title, name + 'title'),
+          content: required(card.content, name + 'content'),
+          speechText: optional(card.speechText, name + 'speechText'),
+          memoryTip: optional(card.memoryTip, name + 'memoryTip')
+        };
+      });
+      return { title: title, description: description, cards: imported };
+    }
+    function importSignature(deck) {
+      return JSON.stringify([
+        deck.title.trim(), (deck.description || '').trim(),
+        deck.cards.map(function (card) {
+          return [card.title.trim(), card.content.trim(), (card.speechText || '').trim(), (card.memoryTip || '').trim()];
+        })
+      ]);
+    }
+    function updateImportWarning() {
+      var warning = root.querySelector('[data-import-warning]');
+      var title = importTitle.value.trim();
+      warning.textContent = duplicateDeck
+        ? '已有相同内容的卡组，继续将打开已有卡组。'
+        : importedCards && decks.some(function (deck) { return deck.title === title; })
+          ? '已有同名卡组；内容不同，导入后会新增一个卡组。'
+          : '';
+      warning.hidden = !warning.textContent;
+      root.querySelector('[data-import-save]').textContent = duplicateDeck ? '查看已有卡组' : '导入';
+    }
+    function importError(message) {
+      var error = root.querySelector('[data-import-error]');
+      error.textContent = message || '';
+      error.hidden = !message;
+    }
+    function closeImport() {
+      importSheet.classList.remove('on');
+      importedCards = null;
+      duplicateDeck = null;
+      importFile.value = '';
+      if (sheetOpener && sheetOpener.isConnected) sheetOpener.focus();
+    }
+    root.querySelector('[data-import-open]').addEventListener('click', function () {
+      sheetOpener = document.activeElement;
+      importFile.click();
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-import-close]'), function (el) {
+      el.addEventListener('click', closeImport);
+    });
+    importFile.addEventListener('change', async function () {
+      var file = importFile.files && importFile.files[0];
+      if (!file) return;
+      importedCards = null;
+      duplicateDeck = null;
+      importTitle.value = '';
+      importError('');
+      updateImportWarning();
+      root.querySelector('[data-import-summary]').textContent = file.name;
+      importSheet.classList.add('on');
+      try {
+        if (file.size > 2 * 1024 * 1024) throw new Error('文件不能超过 2 MiB');
+        var text = new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer());
+        importedCards = parseImportJson(text);
+        var signature = importSignature(importedCards);
+        duplicateDeck = decks.find(function (deck) {
+          return deck.importSignature === signature || importSignature(deck) === signature;
+        }) || null;
+        importTitle.value = importedCards.title;
+        root.querySelector('[data-import-summary]').textContent = file.name + ' · ' + importedCards.cards.length + ' 张卡片';
+        updateImportWarning();
+        importTitle.focus();
+      } catch (error) {
+        importError(error.message || '无法读取文件');
+      }
+      root.querySelector('[data-import-save]').disabled = !importedCards;
+    });
+    root.querySelector('[data-import-save]').addEventListener('click', function () {
+      if (!importedCards) return;
+      if (duplicateDeck) {
+        var existing = duplicateDeck;
+        closeImport();
+        openDeck(existing);
+        return;
+      }
+      var title = importTitle.value.trim();
+      if (!title) { importError('请输入卡组名称'); importTitle.focus(); return; }
+      var deck = { title: title, description: importedCards.description, cards: importedCards.cards, idx: 0, importSignature: importSignature(importedCards) };
+      decks.push(deck);
+      persist();
+      closeImport();
+      renderDecks();
+      openDeck(deck);
+    });
+    importTitle.addEventListener('input', function () { importError(''); updateImportWarning(); });
     root.querySelector('[data-deck-edit]').addEventListener('click', function () { openDeckForm(currentDeck); });
     Array.prototype.forEach.call(root.querySelectorAll('[data-deck-close]'), function (el) {
       el.addEventListener('click', function () { closeForm('deck', false); });
@@ -1213,6 +1506,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       }
       closeForm('deck', true);
       renderDecks();
+      persist();
     });
     deckForm.deleteButton.addEventListener('click', function () {
       if (!editingDeck) return;
@@ -1221,11 +1515,31 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         decks.splice(decks.indexOf(targetDeck), 1);
         closeForm('deck', true);
         renderDecks();
+        persist();
         show('home');
       }, '删除', true);
     });
 
     search.addEventListener('input', renderDecks);
+    settings.defaultMode.addEventListener('change', function () { persist(); });
+    settings.speechRate.addEventListener('change', function () { persist(); });
+    settings.delay.addEventListener('change', function () { persist(); });
+    previewBtn.addEventListener('click', function () {
+      var rate = Number(settings.speechRate.value) || 1;
+      var text = '你好，这是知声卡的朗读速度试听。';
+      if (ttsAvailable) {
+        try {
+          var u = new SpeechSynthesisUtterance(text);
+          u.lang = 'zh-CN';
+          u.rate = rate;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
+          previewStatus.textContent = '正在试听 ' + rate.toFixed(1) + '×';
+        } catch (_) { previewStatus.textContent = '当前浏览器不支持语音试听'; }
+      } else {
+        previewStatus.textContent = '当前浏览器不支持语音试听';
+      }
+    });
     cardFields().forEach(function (field) { field.addEventListener('input', function () { field.removeAttribute('aria-invalid'); formError('card', ''); }); });
     deckFields().forEach(function (field) { field.addEventListener('input', function () { field.removeAttribute('aria-invalid'); formError('deck', ''); }); });
     modeOpen.addEventListener('click', function () {
@@ -1249,16 +1563,49 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       if (confirmSheet.classList.contains('on')) { e.preventDefault(); closeConfirm(); }
       else if (sheet.classList.contains('on')) { e.preventDefault(); closeForm('card', false); }
       else if (deckSheet.classList.contains('on')) { e.preventDefault(); closeForm('deck', false); }
+      else if (importSheet.classList.contains('on')) { e.preventDefault(); closeImport(); }
       else if (modeSheet.classList.contains('on')) { e.preventDefault(); closeModeSheet(); }
+      else if (micSheet.classList.contains('on')) { e.preventDefault(); micSheet.classList.remove('on'); pendingProceed = null; }
     });
     Array.prototype.forEach.call(root.querySelectorAll('[data-mode-choice]'), function (el) {
       el.addEventListener('click', function () {
         modeSheet.classList.remove('on');
         resumeAfterModeClose = false;
-        setMode(Number(el.getAttribute('data-mode-choice')), true);
-        if (!studyScr.classList.contains('on')) show('study');
-        cardFlipper.focus();
+        requestMode(Number(el.getAttribute('data-mode-choice')), true);
       });
+    });
+
+    micContinue.addEventListener('click', function () {
+      micSheet.classList.remove('on');
+      micExplained = true;
+      persist();
+      var proceed = pendingProceed;
+      pendingProceed = null;
+      requestMicPermission(proceed);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll('[data-mic-cancel]'), function (el) {
+      el.addEventListener('click', function () {
+        micSheet.classList.remove('on');
+        pendingProceed = null;
+      });
+    });
+    errorRetry.addEventListener('click', function () {
+      requestMicPermission(function (granted) {
+        if (granted) {
+          phase = 'ready';
+          paused = false;
+          paint();
+          runAuto();
+        } else {
+          enterFollowAlongError('仍无法使用麦克风：权限被拒绝');
+        }
+      });
+    });
+    errorSettings.addEventListener('click', function () {
+      setStatus('请在系统设置中开启麦克风权限（原型演示）');
+    });
+    errorManual.addEventListener('click', function () {
+      setMode(0, true);
     });
 
     renderDecks();

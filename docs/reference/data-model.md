@@ -36,6 +36,7 @@ data class Deck(
     val position: Int,
     val createdAt: ISODateTime,
     val updatedAt: ISODateTime,
+    val importFingerprint: String?,
 )
 
 data class Card(
@@ -146,7 +147,8 @@ CREATE TABLE decks (
   description TEXT,
   position INTEGER NOT NULL CHECK (position >= 0),
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  import_fingerprint TEXT
 );
 
 CREATE TABLE cards (
@@ -206,6 +208,7 @@ CREATE TABLE user_settings (
 );
 
 CREATE INDEX idx_decks_position ON decks(position);
+CREATE UNIQUE INDEX idx_decks_import_fingerprint ON decks(import_fingerprint);
 CREATE INDEX idx_cards_deck_position ON cards(deck_id, position);
 CREATE INDEX idx_attempts_deck_ended ON card_attempts(deck_id, ended_at DESC);
 CREATE INDEX idx_attempts_card_ended ON card_attempts(card_id, ended_at DESC);
@@ -216,6 +219,10 @@ CREATE INDEX idx_attempts_card_ended ON card_attempts(card_id, ended_at DESC);
 切换到下一张时，在同一事务中写入适用的学习记录并更新 `deck_progress`。自动跟读只有事务成功后才翻面并进入下一张；自动播放和返回上一张只更新位置。
 
 删除卡组和卡片前由 UI 二次确认。删除卡组依赖外键级联；删除当前卡片后，位置回退到新列表中的合法索引。
+
+外部 JSON 导入先完整解析和校验，再在同一事务中创建新 `Deck`、全部 `Card` 和初始 `DeckProgress`。为导入数据生成新 UUID 和时间戳，卡片 `position` 按数组顺序从 0 开始、`revision` 为 1；文件不携带学习记录。任一写入失败时回滚整次导入。
+
+导入指纹对规范化后的原始卡组名称、说明及有序卡片的 `title`、`content`、`speechText`、`memoryTip` 计算 SHA-256；不包含文件名、外部 ID、JSON 字段顺序和无关字段。空可选字段与缺失字段等价。导入前先与已有导入指纹及卡组当前内容比较；命中时打开已有卡组。新增卡组保存原始导入指纹，即使之后编辑标题或卡片，仍能识别相同文件的重复导入。唯一索引防止并发导入重复写入。手动创建卡组的指纹为 `NULL`；删除卡组后指纹随之删除。
 
 ## 9. 数据库版本
 
