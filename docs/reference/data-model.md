@@ -82,89 +82,94 @@ erDiagram
 
 ## 3. 领域类型
 
-以下片段用于表达字段和可空性，是设计伪代码；Android 实现使用 Kotlin `data class`、`enum class` 和 Room Entity。
+以下 Kotlin 片段是待实现的领域模型。Room Entity 和 DAO 位于数据层，不直接进入领域层；枚举通过显式映射保存为 `value` 字符串，保持下文 SQLite 取值不变。默认设置的 `now` 由调用方提供 UTC ISO 8601 时间。
 
-```ts
-export type ID = string;
-export type ISODateTime = string;
+```kotlin
+typealias ID = String
+typealias ISODateTime = String
 
-export type LearningMode = 'manual' | 'repeat';
-
-export type SessionStatus =
-  | 'active'
-  | 'paused'
-  | 'completed'
-  | 'abandoned';
-
-export type AttemptOutcome =
-  | 'viewed'
-  | 'read_completed'
-  | 'skipped';
-
-export interface Deck {
-  id: ID;
-  title: string;
-  description: string | null;
-  position: number;
-  createdAt: ISODateTime;
-  updatedAt: ISODateTime;
+enum class LearningMode(val value: String) {
+    MANUAL("manual"),
+    REPEAT("repeat")
 }
 
-export interface Card {
-  id: ID;
-  deckId: ID;
-  title: string;
-  content: string;
-  speechText: string | null;
-  explanation: string | null;
-  language: string;
-  position: number;
-  revision: number;
-  createdAt: ISODateTime;
-  updatedAt: ISODateTime;
+enum class SessionStatus(val value: String) {
+    ACTIVE("active"),
+    PAUSED("paused"),
+    COMPLETED("completed"),
+    ABANDONED("abandoned")
 }
 
-export interface LearningSession {
-  id: ID;
-  deckId: ID;
-  mode: LearningMode;
-  status: SessionStatus;
-  currentIndex: number;
-  startedAt: ISODateTime;
-  updatedAt: ISODateTime;
-  endedAt: ISODateTime | null;
+enum class AttemptOutcome(val value: String) {
+    VIEWED("viewed"),
+    READ_COMPLETED("read_completed"),
+    SKIPPED("skipped")
 }
 
-export interface SessionCard {
-  sessionId: ID;
-  cardId: ID;
-  position: number;
-}
+data class Deck(
+    val id: ID,
+    val title: String,
+    val description: String?,
+    val position: Int,
+    val createdAt: ISODateTime,
+    val updatedAt: ISODateTime
+)
 
-export interface MatchResult {
-  coverage: number;
-  endingMatched: boolean;
-  algorithmVersion: string;
-}
+data class Card(
+    val id: ID,
+    val deckId: ID,
+    val title: String,
+    val content: String,
+    val speechText: String?,
+    val explanation: String?,
+    val language: String,
+    val position: Int,
+    val revision: Int,
+    val createdAt: ISODateTime,
+    val updatedAt: ISODateTime
+)
 
-export interface CardAttempt {
-  id: ID;
-  sessionId: ID;
-  cardId: ID;
-  cardRevision: number;
-  mode: LearningMode;
-  outcome: AttemptOutcome;
-  matchResult: MatchResult | null;
-  startedAt: ISODateTime;
-  endedAt: ISODateTime;
-}
+data class LearningSession(
+    val id: ID,
+    val deckId: ID,
+    val mode: LearningMode,
+    val status: SessionStatus,
+    val currentIndex: Int,
+    val startedAt: ISODateTime,
+    val updatedAt: ISODateTime,
+    val endedAt: ISODateTime?
+)
 
-export interface UserSettings {
-  defaultMode: LearningMode;
-  speechRate: number;
-  autoAdvanceDelayMs: number;
-  updatedAt: ISODateTime;
-}
+data class SessionCard(
+    val sessionId: ID,
+    val cardId: ID,
+    val position: Int
+)
+
+data class MatchResult(
+    val coverage: Double,
+    val endingMatched: Boolean,
+    val algorithmVersion: String
+)
+
+data class CardAttempt(
+    val id: ID,
+    val sessionId: ID,
+    val cardId: ID,
+    val cardRevision: Int,
+    val mode: LearningMode,
+    val outcome: AttemptOutcome,
+    val matchResult: MatchResult?,
+    val startedAt: ISODateTime,
+    val endedAt: ISODateTime
+)
+
+data class UserSettings(
+    val defaultMode: LearningMode,
+    val speechRate: Double,
+    val autoAdvanceDelayMs: Long,
+    val updatedAt: ISODateTime
+)
 ```
 
 ## 4. Deck 卡组
@@ -197,9 +202,9 @@ export interface UserSettings {
 
 跟读目标按下面的规则取得：
 
-```ts
-const targetText =
-  card.speechText?.trim() || card.content.trim();
+```kotlin
+val targetText = card.speechText?.trim()?.takeIf { it.isNotEmpty() }
+    ?: card.content.trim()
 ```
 
 修改以下字段时，`revision` 加 1：
@@ -260,13 +265,13 @@ endedAt = 当前时间
 
 默认值：
 
-```ts
-export const DEFAULT_SETTINGS: UserSettings = {
-  defaultMode: 'manual',
-  speechRate: 1,
-  autoAdvanceDelayMs: 600,
-  updatedAt: new Date().toISOString(),
-};
+```kotlin
+fun defaultSettings(now: ISODateTime) = UserSettings(
+    defaultMode = LearningMode.MANUAL,
+    speechRate = 1.0,
+    autoAdvanceDelayMs = 600L,
+    updatedAt = now,
+)
 ```
 
 约束：
@@ -275,7 +280,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
 - `autoAdvanceDelayMs`：`0` 到 `3000`
 - 没有设置记录时使用默认值
 
-## 9. SQLite 建表语句
+## 9. SQLite 目标表结构
+
+以下 SQL 表达目标约束，不作为应用启动时手工执行的建表脚本。实现使用 Room Entity、索引、外键和迁移；需要额外实现并验证 Room 声明不能直接表达的 CHECK 约束。
 
 ```sql
 PRAGMA foreign_keys = ON;

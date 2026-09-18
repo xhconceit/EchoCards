@@ -16,7 +16,7 @@ Learning Engine 负责控制整个学习过程：
 - 处理暂停、重读、跳过和手动翻页
 - 取消旧语音任务，防止重复翻页
 
-Learning Engine 使用 Kotlin 实现，不依赖 Compose 页面或 Android UI 类型。文中的类型片段是领域设计伪代码，实现时使用 Kotlin 的 `sealed interface`、`data class`、协程和 `StateFlow` 表达同等约束。
+Learning Engine 使用 Kotlin 实现，不依赖 Compose 页面或 Android UI 类型。文中的 Kotlin 片段是待实现的领域契约，流程步骤用于说明规则。命令通过协程执行，状态通过 `StateFlow` 输出；实现时串行处理命令和系统回调。枚举的 `value` 对应下文状态图中的名称。
 
 ## 2. 架构位置
 
@@ -45,19 +45,20 @@ flowchart LR
 
 ## 3. 学习阶段
 
-```ts
-export type LearningPhase =
-  | 'idle'
-  | 'loading'
-  | 'ready'
-  | 'speaking'
-  | 'listening'
-  | 'evaluating'
-  | 'advancing'
-  | 'paused'
-  | 'completed'
-  | 'error'
-  | 'disposed';
+```kotlin
+enum class LearningPhase(val value: String) {
+    IDLE("idle"),
+    LOADING("loading"),
+    READY("ready"),
+    SPEAKING("speaking"),
+    LISTENING("listening"),
+    EVALUATING("evaluating"),
+    ADVANCING("advancing"),
+    PAUSED("paused"),
+    COMPLETED("completed"),
+    ERROR("error"),
+    DISPOSED("disposed")
+}
 ```
 
 | 状态 | 含义 |
@@ -123,24 +124,22 @@ stateDiagram-v2
 
 ## 5. Engine 对外命令
 
-```ts
-export interface LearningEngine {
-  initialize(sessionId: string): Promise<void>;
-  start(): Promise<void>;
+```kotlin
+interface LearningEngine {
+    val state: kotlinx.coroutines.flow.StateFlow<LearningEngineState>
 
-  pause(): Promise<void>;
-  resume(): Promise<void>;
-
-  next(): Promise<void>;
-  previous(): Promise<void>;
-  skip(): Promise<void>;
-  retry(): Promise<void>;
-
-  replay(): Promise<void>;
-  stopSpeaking(): Promise<void>;
-
-  setMode(mode: LearningMode): Promise<void>;
-  dispose(): Promise<void>;
+    suspend fun initialize(sessionId: String): Unit
+    suspend fun start(): Unit
+    suspend fun pause(): Unit
+    suspend fun resume(): Unit
+    suspend fun next(): Unit
+    suspend fun previous(): Unit
+    suspend fun skip(): Unit
+    suspend fun retry(): Unit
+    suspend fun replay(): Unit
+    suspend fun stopSpeaking(): Unit
+    suspend fun setMode(mode: LearningMode): Unit
+    suspend fun dispose(): Unit
 }
 ```
 
@@ -163,122 +162,84 @@ export interface LearningEngine {
 
 ## 6. Engine 输出状态
 
-```ts
-export interface LearningEngineState {
-  sessionId: string | null;
-  deckId: string | null;
-
-  mode: LearningMode;
-  phase: LearningPhase;
-
-  cards: Card[];
-  currentIndex: number;
-  currentCard: Card | null;
-
-  operationId: string | null;
-
-  transcript: string;
-  matchResult: MatchResult | null;
-
-  previousPhase: LearningPhase | null;
-
-  error: LearningError | null;
-}
+```kotlin
+data class LearningEngineState(
+    val sessionId: String?,
+    val deckId: String?,
+    val mode: LearningMode,
+    val phase: LearningPhase,
+    val cards: List<Card>,
+    val currentIndex: Int,
+    val currentCard: Card?,
+    val operationId: String?,
+    val transcript: String,
+    val matchProgress: MatchProgress?,
+    val matchResult: MatchResult?,
+    val previousPhase: LearningPhase?,
+    val error: LearningError?
+)
 ```
 
 计算属性：
 
-```ts
-export interface LearningProgress {
-  current: number;
-  total: number;
-  canGoPrevious: boolean;
-  canGoNext: boolean;
-  isLastCard: boolean;
-}
+```kotlin
+data class LearningProgress(
+    val current: Int,
+    val total: Int,
+    val canGoPrevious: Boolean,
+    val canGoNext: Boolean,
+    val isLastCard: Boolean
+)
 ```
 
 页面根据 Engine 状态渲染，不自行推断流程阶段。
 
 ## 7. Engine 接收的内部事件
 
-```ts
-export type LearningEvent =
-  | {
-      type: 'SPEECH_STARTED';
-      operationId: string;
-    }
-  | {
-      type: 'SPEECH_COMPLETED';
-      operationId: string;
-    }
-  | {
-      type: 'SPEECH_FAILED';
-      operationId: string;
-      error: SpeechError;
-    }
-  | {
-      type: 'RECOGNITION_PARTIAL';
-      operationId: string;
-      transcript: string;
-    }
-  | {
-      type: 'RECOGNITION_FINAL';
-      operationId: string;
-      transcript: string;
-    }
-  | {
-      type: 'RECOGNITION_SILENCE';
-      operationId: string;
-    }
-  | {
-      type: 'RECOGNITION_FAILED';
-      operationId: string;
-      error: SpeechError;
-    }
-  | {
-      type: 'APP_BACKGROUNDED';
-    }
-  | {
-      type: 'AUDIO_INTERRUPTED';
-    };
+```kotlin
+sealed interface LearningEvent {
+    data class SpeechStarted(val operationId: String) : LearningEvent
+    data class SpeechCompleted(val operationId: String) : LearningEvent
+    data class SpeechFailed(val operationId: String, val error: SpeechError) : LearningEvent
+    data class RecognitionPartial(val operationId: String, val transcript: String) : LearningEvent
+    data class RecognitionFinal(val operationId: String, val transcript: String) : LearningEvent
+    data class RecognitionSilence(val operationId: String) : LearningEvent
+    data class RecognitionFailed(val operationId: String, val error: SpeechError) : LearningEvent
+    data object AppBackgrounded : LearningEvent
+    data object AudioInterrupted : LearningEvent
+}
 ```
 
 ## 8. operationId 取消机制
 
 每次开始、重读或切换卡片时，都创建新的 `operationId`：
 
-```ts
-const operationId = crypto.randomUUID();
+```kotlin
+val operationId = java.util.UUID.randomUUID().toString()
 ```
 
 调用语音服务时传入它：
 
-```ts
-await speechPlayer.speak({
-  operationId,
-  text: targetText,
-  language: card.language,
-});
+```kotlin
+speechPlayer.speak(SpeakRequest(
+    operationId = operationId,
+    text = targetText,
+    language = card.language,
+    rate = settings.speechRate,
+))
 ```
 
 处理回调前必须验证：
 
-```ts
-function isCurrentOperation(operationId: string): boolean {
-  return (
-    state.operationId === operationId &&
-    state.phase !== 'disposed'
-  );
-}
+```kotlin
+fun isCurrentOperation(operationId: String): Boolean =
+    state.operationId == operationId && state.phase != LearningPhase.DISPOSED
 ```
 
 如果不属于当前操作，直接忽略：
 
-```ts
-if (!isCurrentOperation(event.operationId)) {
-  return;
-}
+```kotlin
+if (!isCurrentOperation(event.operationId)) return
 ```
 
 以下行为都要使旧操作失效：
@@ -307,124 +268,46 @@ if (!isCurrentOperation(event.operationId)) {
 
 ### 开始当前卡片
 
-```ts
-async function startCurrentCard(): Promise<void> {
-  const card = state.currentCard;
-
-  if (!card) {
-    return completeSession();
-  }
-
-  const operationId = createOperationId();
-
-  setState({
-    phase: 'speaking',
-    operationId,
-    transcript: '',
-    matchResult: null,
-    error: null,
-  });
-
-  await speechPlayer.speak({
-    operationId,
-    text: getTargetText(card),
-    language: card.language,
-    rate: settings.speechRate,
-  });
-}
+```text
+没有当前卡片 → 结束会话
+生成新的 operationId
+更新 StateFlow：phase = speaking，清空 transcript、匹配进度和错误
+调用 SpeechPlayer.speak，传入 operationId、跟读文本、语言和设置中的语速
 ```
 
 ### 朗读完成
 
-```ts
-async function onSpeechCompleted(
-  operationId: string,
-): Promise<void> {
-  if (!isCurrentOperation(operationId)) {
-    return;
-  }
-
-  if (state.mode === 'manual') {
-    setState({ phase: 'ready' });
-    return;
-  }
-
-  setState({ phase: 'listening' });
-
-  await speechRecognizer.start({
-    operationId,
-    language: state.currentCard!.language,
-  });
-}
+```text
+忽略不属于当前 operationId 的回调
+手动模式 → phase = ready，不开启识别
+自动模式 → phase = listening
+调用 SpeechRecognizer.start，传入当前 operationId、卡片语言、部分结果和端侧识别偏好
 ```
 
 ### 收到识别结果
 
-```ts
-async function onTranscript(
-  operationId: string,
-  transcript: string,
-): Promise<void> {
-  if (!isCurrentOperation(operationId)) {
-    return;
-  }
-
-  setState({
-    phase: 'evaluating',
-    transcript,
-  });
-
-  const result = matcher.match({
-    target: getTargetText(state.currentCard!),
-    transcript,
-  });
-
-  setState({ matchResult: result });
-
-  if (result.completed) {
-    await completeCurrentCard(operationId, result);
-    return;
-  }
-
-  setState({ phase: 'listening' });
-}
+```text
+忽略不属于当前 operationId 或不允许匹配阶段的回调
+更新 phase = evaluating 和临时 transcript
+构造 MatchInput：targetText、transcript、previousProgress、signal
+调用 SpeechMatcher.match，得到 MatchProgress 并保留在内存
+将 coverage、endingMatched、algorithmVersion 投影为 MatchResult
+completed = true → 进入单卡完成流程
+否则恢复 phase = listening
 ```
 
 ### 完成并翻页
 
-```ts
-async function completeCurrentCard(
-  operationId: string,
-  result: MatchResult,
-): Promise<void> {
-  if (!isCurrentOperation(operationId)) {
-    return;
-  }
-
-  setState({ phase: 'advancing' });
-
-  await speechRecognizer.cancel(operationId);
-
-  await repository.completeCard({
-    sessionId: state.sessionId!,
-    cardId: state.currentCard!.id,
-    cardRevision: state.currentCard!.revision,
-    outcome: 'read_completed',
-    matchResult: result,
-  });
-
-  if (!isCurrentOperation(operationId)) {
-    return;
-  }
-
-  await wait(settings.autoAdvanceDelayMs);
-
-  if (!isCurrentOperation(operationId)) {
-    return;
-  }
-
-  await moveToNextCard();
-}
+```text
+验证 operationId、当前阶段和完成锁（详见第 13 节）
+设置完成锁，更新 phase = advancing
+取消当前识别
+在 Repository 事务中保存单卡结果并推进会话位置：
+    sessionId、cardId、cardRevision、outcome = read_completed、MatchResult
+再次验证 operationId
+使用协程 delay 等待 autoAdvanceDelayMs
+再次验证 operationId，然后切换到下一张卡片
+成功或失败后均清理完成锁
 ```
 
 Repository 必须在一个事务中保存单卡结果和会话进度。
@@ -445,8 +328,8 @@ Repository 必须在一个事务中保存单卡结果和会话进度。
 
 需要限制自动重启次数，初始建议：
 
-```ts
-const MAX_RECOGNITION_RESTARTS = 3;
+```kotlin
+private const val MAX_RECOGNITION_RESTARTS = 3
 ```
 
 超过限制后：
@@ -504,24 +387,21 @@ App 进入后台或音频被系统中断时，执行与暂停相同的逻辑。
 
 Engine 内部增加完成锁：
 
-```ts
-private advancingOperationId: string | null = null;
+```kotlin
+private var advancingOperationId: String? = null
 ```
 
 进入完成流程前检查：
 
-```ts
-if (advancingOperationId === operationId) {
-  return;
-}
-
-advancingOperationId = operationId;
+```kotlin
+if (advancingOperationId == operationId) return
+advancingOperationId = operationId
 ```
 
 翻页结束或失败后清理：
 
-```ts
-advancingOperationId = null;
+```kotlin
+advancingOperationId = null
 ```
 
 同时使用三个保护条件：
@@ -532,25 +412,26 @@ advancingOperationId = null;
 
 ## 14. 错误模型
 
-```ts
-export type LearningErrorCode =
-  | 'SESSION_NOT_FOUND'
-  | 'CARD_NOT_FOUND'
-  | 'DATABASE_ERROR'
-  | 'MICROPHONE_PERMISSION_DENIED'
-  | 'SPEECH_UNAVAILABLE'
-  | 'SPEECH_PLAYBACK_FAILED'
-  | 'RECOGNITION_FAILED'
-  | 'RECOGNITION_TIMEOUT'
-  | 'AUDIO_INTERRUPTED'
-  | 'UNKNOWN';
-
-export interface LearningError {
-  code: LearningErrorCode;
-  message: string;
-  recoverable: boolean;
-  operationId: string | null;
+```kotlin
+enum class LearningErrorCode(val value: String) {
+    SESSION_NOT_FOUND("SESSION_NOT_FOUND"),
+    CARD_NOT_FOUND("CARD_NOT_FOUND"),
+    DATABASE_ERROR("DATABASE_ERROR"),
+    MICROPHONE_PERMISSION_DENIED("MICROPHONE_PERMISSION_DENIED"),
+    SPEECH_UNAVAILABLE("SPEECH_UNAVAILABLE"),
+    SPEECH_PLAYBACK_FAILED("SPEECH_PLAYBACK_FAILED"),
+    RECOGNITION_FAILED("RECOGNITION_FAILED"),
+    RECOGNITION_TIMEOUT("RECOGNITION_TIMEOUT"),
+    AUDIO_INTERRUPTED("AUDIO_INTERRUPTED"),
+    UNKNOWN("UNKNOWN")
 }
+
+data class LearningError(
+    val code: LearningErrorCode,
+    val message: String,
+    val recoverable: Boolean,
+    val operationId: String?
+)
 ```
 
 错误信息分两部分：
@@ -560,12 +441,12 @@ export interface LearningError {
 
 底层错误信息记录到开发日志，不直接展示给普通用户。
 
-## 15. 页面卸载
+## 15. 页面退出与资源释放
 
 离开学习页面时必须调用：
 
-```ts
-await engine.dispose();
+```kotlin
+engine.dispose()
 ```
 
 `dispose()` 需要：

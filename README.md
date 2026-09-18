@@ -1,78 +1,58 @@
 # 知声卡 EchoCards
 
+一个通过知识卡片、语音朗读和用户跟读进行学习的 Android App。
 
-一个通过知识卡片、语音朗读和用户跟读进行学习的 App。
+## 当前状态
 
-## 支持平台
+项目已切换为 Android 原生开发。目前已建立 Kotlin + Jetpack Compose 工程骨架，App 入口仍为占位文本；卡片管理、本地存储和语音学习尚待实现。
 
-- Android
-- iPhone
+[dome.html](dome.html) 是独立的交互设计原型，使用模拟数据和动画，不代表 Android 功能已经实现。需求、架构和接口设计见 [文档入口](docs/README.md)。
 
-## 核心功能
+## 第一版目标
 
-### 手动学习
+- 卡组管理与卡片新增、编辑、删除、排序
+- 上下滑动手动学习，支持播放和停止当前卡片朗读
+- 自动流程：App 朗读 → 用户跟读 → 完成判断 → 自动翻页
+- 暂停、继续、重读和跳过
+- 本地保存内容、学习位置和学习结果
+- 普通话支持，语音不可用时保留手动学习
 
-每张卡片展示一个知识点，用户滑动切换卡片，
-也可以点击按钮播放朗读。
+账号与跨设备同步、更多语言和复习计划不在第一版范围内。
 
-### 自动跟读
+## 技术方案
 
-1. App 朗读当前卡片。
-2. 朗读结束后，提示用户跟读。
-3. 识别用户跟读内容，判断是否读完。
-4. 读完后自动切换到下一张。
-5. 用户可以随时暂停、重读或跳过。
+第一版仅支持 Android，决策见 [ADR-001](docs/decisions/001-use-native-android.md)。
 
-## 第一版范围
+- Kotlin + Jetpack Compose + Material 3
+- 单 Activity + Navigation Compose
+- ViewModel + StateFlow + Kotlin Coroutines
+- Room（SQLite）本地存储
+- Android TextToSpeech 和 SpeechRecognizer
 
-- 卡组管理
-- 卡片新增、编辑和删除
-- 手动滑动学习
-- 自动朗读与跟读
-- 本地保存内容和学习进度
-- 普通话支持
-
-## 后续功能
-
-- 账号与跨设备同步
-- 更多语言
-- 复习计划
-
-## 技术方向
-
-- React Native + TypeScript
-- Expo Development Build
-- SQLite 本地存储
-- Android / iOS 语音能力适配
-
-## 文档入口
-
-后续在 docs/README.md 中维护。
+上述为目标架构；当前工程仅接入基础 Compose 和 AndroidX 依赖，其余随功能开发引入。依赖版本以 [Version Catalog](android/gradle/libs.versions.toml) 为准。
 
 ## 本地开发
 
-自动跟读使用原生语音识别模块，因此不能在 Expo Go 中运行。首次运行或原生依赖发生变化后，需要重新生成并安装 Development Build：
+使用 Android Studio 打开 `android/` 目录并同步 Gradle。工程配置为 `minSdk = 24`、`compileSdk = 37`、`targetSdk = 36`，Gradle Daemon 使用 JDK 21（见 `android/gradle/gradle-daemon-jvm.properties`）。安装对应 Android SDK，并通过 Android Studio 配置本机 SDK 路径。
+
+在项目根目录执行：
 
 ```bash
-npm install
+cd android
 
-# iOS 模拟器
-npm run ios
+# 构建 Debug APK
+./gradlew :app:assembleDebug
 
-# Android 模拟器
-npm run android
+# 单元测试与静态检查
+./gradlew :app:testDebugUnitTest :app:lintDebug
+
+# 连接 Android 设备或启动模拟器后安装
+./gradlew :app:installDebug
+
+# 设备上的集成测试
+./gradlew :app:connectedDebugAndroidTest
 ```
 
-真机通过 USB 连接后使用：
+也可以在 Android Studio 选择 `app` 和目标设备后运行。当前测试仍是工程模板示例，尚未覆盖业务功能。
 
-```bash
-npm run ios:device
-# 或
-npm run android:device
-```
-
-Development Build 已安装后，日常只需启动 Metro：
-
-```bash
-npm start
-```
+完整页面开发前，先验证固定卡片的朗读、跟读识别和完成判断流程。语音服务、语言包和离线能力依设备而异，必须覆盖目标 Android 真机。

@@ -30,7 +30,7 @@
 | 手势与动画 | Compose Foundation / Animation |
 | 语音能力 | Android TextToSpeech / SpeechRecognizer |
 
-具体依赖版本在创建工程时锁定。
+工程骨架已创建，已接入依赖的版本锁定在 `android/gradle/libs.versions.toml`，Gradle 版本由 Wrapper 锁定。Navigation Compose、Room 等业务依赖尚待引入；下文描述目标架构，不代表已经实现。
 
 ## 3. 系统上下文
 

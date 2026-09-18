@@ -20,30 +20,30 @@
 
 ## 2. 输入与输出
 
-```ts
-export interface MatchInput {
-  targetText: string;
-  transcript: string;
-  previousProgress: MatchProgress | null;
-  signal: 'partial' | 'final' | 'silence';
-}
+```kotlin
+enum class RecognitionSignal { PARTIAL, FINAL, SILENCE }
 
-export interface MatchProgress {
-  normalizedTarget: string;
-  matchedCharacterCount: number;
-  targetCharacterCount: number;
+data class MatchInput(
+    val targetText: String,
+    val transcript: String,
+    val previousProgress: MatchProgress?,
+    val signal: RecognitionSignal
+)
 
-  coverage: number;
-  endingMatched: boolean;
-  stable: boolean;
-  completed: boolean;
+data class MatchProgress(
+    val normalizedTarget: String,
+    val matchedCharacterCount: Int,
+    val targetCharacterCount: Int,
+    val coverage: Double,
+    val endingMatched: Boolean,
+    val stable: Boolean,
+    val completed: Boolean,
+    val consecutiveCompletedResults: Int,
+    val algorithmVersion: String
+)
 
-  consecutiveCompletedResults: number;
-  algorithmVersion: 'v1';
-}
-
-export interface SpeechMatcher {
-  match(input: MatchInput): MatchProgress;
+interface SpeechMatcher {
+    fun match(input: MatchInput): MatchProgress
 }
 ```
 
@@ -51,28 +51,27 @@ export interface SpeechMatcher {
 
 示例：
 
-```ts
-{
-  normalizedTarget: '物体保持原来运动状态不变的性质叫作惯性',
-  matchedCharacterCount: 18,
-  targetCharacterCount: 21,
-  coverage: 0.857,
-  endingMatched: false,
-  stable: false,
-  completed: false,
-  consecutiveCompletedResults: 0,
-  algorithmVersion: 'v1'
-}
+```kotlin
+MatchProgress(
+    normalizedTarget = "物体保持原来运动状态不变的性质叫作惯性",
+    matchedCharacterCount = 18,
+    targetCharacterCount = 21,
+    coverage = 0.857,
+    endingMatched = false,
+    stable = false,
+    completed = false,
+    consecutiveCompletedResults = 0,
+    algorithmVersion = "v1",
+)
 ```
 
 ## 3. 文本来源
 
 匹配目标使用：
 
-```ts
-function getTargetText(card: Card): string {
-  return card.speechText?.trim() || card.content.trim();
-}
+```kotlin
+fun getTargetText(card: Card): String =
+    card.speechText?.trim()?.takeIf { it.isNotEmpty() } ?: card.content.trim()
 ```
 
 标题和补充解释默认不参与匹配。
@@ -93,9 +92,9 @@ function getTargetText(card: Card): string {
 
 目标文本和识别文本必须使用相同的标准化流程。
 
-```ts
-export interface TextNormalizer {
-  normalize(text: string, language: string): string;
+```kotlin
+interface TextNormalizer {
+    fun normalize(text: String, language: String): String
 }
 ```
 
@@ -188,32 +187,25 @@ export interface TextNormalizer {
 
 伪代码：
 
-```ts
-function countOrderedMatches(
-  target: string,
-  transcript: string,
-): number {
-  let targetIndex = 0;
-
-  for (const character of transcript) {
-    if (character === target[targetIndex]) {
-      targetIndex += 1;
+```kotlin
+fun countOrderedMatches(target: String, transcript: String): Int {
+    var targetIndex = 0
+    for (character in transcript) {
+        if (targetIndex >= target.length) break
+        if (character == target[targetIndex]) targetIndex += 1
     }
-
-    if (targetIndex === target.length) {
-      break;
-    }
-  }
-
-  return targetIndex;
+    return targetIndex
 }
 ```
 
 覆盖率：
 
-```ts
-const coverage =
-  matchedCharacterCount / targetCharacterCount;
+```kotlin
+val coverage = if (targetCharacterCount > 0) {
+    matchedCharacterCount.toDouble() / targetCharacterCount
+} else {
+    0.0
+}
 ```
 
 实际实现需要允许有限的识别错误。建议用序列对齐或编辑距离计算相似度，同时保留目标文本顺序。
@@ -240,11 +232,11 @@ const coverage =
 
 匹配器分别计算每个识别快照，然后保存历史最佳进度：
 
-```ts
-const confirmedMatchedCount = Math.max(
-  previousProgress?.matchedCharacterCount ?? 0,
-  currentResult.matchedCharacterCount,
-);
+```kotlin
+val confirmedMatchedCount = maxOf(
+    previousProgress?.matchedCharacterCount ?: 0,
+    currentResult.matchedCharacterCount,
+)
 ```
 
 已经确认的进度不因临时识别结果波动而下降。
@@ -257,11 +249,11 @@ const confirmedMatchedCount = Math.max(
 
 定义结尾窗口：
 
-```ts
-function getEndingWindow(targetLength: number): number {
-  if (targetLength <= 8) return 2;
-  if (targetLength <= 20) return 3;
-  return 5;
+```kotlin
+fun getEndingWindow(targetLength: Int): Int = when {
+    targetLength <= 8 -> 2
+    targetLength <= 20 -> 3
+    else -> 5
 }
 ```
 
@@ -290,12 +282,12 @@ function getEndingWindow(targetLength: number): number {
 | 16～40 个字符 | 90% | 必须匹配 |
 | 41 个字符以上 | 88% | 必须匹配 |
 
-```ts
-function getCoverageThreshold(length: number): number {
-  if (length <= 5) return 1;
-  if (length <= 15) return 0.95;
-  if (length <= 40) return 0.9;
-  return 0.88;
+```kotlin
+fun getCoverageThreshold(length: Int): Double = when {
+    length <= 5 -> 1.0
+    length <= 15 -> 0.95
+    length <= 40 -> 0.9
+    else -> 0.88
 }
 ```
 
@@ -325,11 +317,8 @@ function getCoverageThreshold(length: number): number {
 - 已匹配结尾
 - 用户停止说话约 800 毫秒
 
-```ts
-const completed =
-  coverage >= threshold &&
-  endingMatched &&
-  stable;
+```kotlin
+val completed = coverage >= threshold && endingMatched && stable
 ```
 
 静音只能用来确认一个已经满足文本条件的结果，不能单独表示完成。
@@ -354,13 +343,13 @@ const completed =
 
 运行时维护：
 
-```ts
-export interface RecognitionAccumulator {
-  confirmedPrefixLength: number;
-  currentTranscript: string;
-  restartCount: number;
-  lastResultAt: number | null;
-}
+```kotlin
+data class RecognitionAccumulator(
+    val confirmedPrefixLength: Int,
+    val currentTranscript: String,
+    val restartCount: Int,
+    val lastResultAt: Long?
+)
 ```
 
 识别会话结束但没有完成时：
@@ -375,62 +364,21 @@ export interface RecognitionAccumulator {
 
 ## 15. 完成判断伪代码
 
-```ts
-function evaluateCompletion(
-  input: MatchInput,
-): MatchProgress {
-  const target = normalize(input.targetText);
-  const transcript = normalize(input.transcript);
-
-  if (target.length === 0) {
-    throw new Error('EMPTY_TARGET_TEXT');
-  }
-
-  const currentMatch = align(target, transcript);
-
-  const matchedCharacterCount = Math.max(
-    input.previousProgress?.matchedCharacterCount ?? 0,
-    currentMatch.matchedCharacterCount,
-  );
-
-  const coverage =
-    matchedCharacterCount / target.length;
-
-  const threshold =
-    getCoverageThreshold(target.length);
-
-  const endingMatched =
-    matchEnding(target, transcript);
-
-  const consecutiveCompletedResults =
-    coverage >= threshold && endingMatched
-      ? (input.previousProgress
-          ?.consecutiveCompletedResults ?? 0) + 1
-      : 0;
-
-  const stable =
-    input.signal === 'final' ||
-    input.signal === 'silence' ||
-    consecutiveCompletedResults >= 2;
-
-  return {
-    normalizedTarget: target,
-    matchedCharacterCount,
-    targetCharacterCount: target.length,
-    coverage,
-    endingMatched,
-    stable,
-    completed:
-      coverage >= threshold &&
-      endingMatched &&
-      stable,
-    consecutiveCompletedResults,
-    algorithmVersion: 'v1',
-  };
-}
+```text
+标准化 targetText 和 transcript；目标为空时报告 EMPTY_TARGET_TEXT
+对目标与识别文本做序列对齐，得到本次匹配字数
+matchedCharacterCount = 历史已确认字数与本次匹配字数的最大值
+coverage = matchedCharacterCount / 标准化目标长度（浮点除法）
+threshold = 对应文本长度的覆盖率阈值
+endingMatched = 结尾匹配结果
+本次满足覆盖率与结尾条件时增加连续达标次数，否则归零
+stable = 第 12 节定义的最终结果、连续临时结果或静音确认条件
+短文本额外遵守第 13 节限制
+completed = coverage >= threshold 且 endingMatched 且 stable
+返回 MatchProgress，algorithmVersion = v1
 ```
 
-这段代码用于表达规则，实际实现时需要将匹配结果和稳定性时间信息分开建模。
+以上流程用于表达规则，实际实现时需要将匹配结果和稳定性时间信息分开建模。
 
 ## 16. 隐私处理
 
@@ -519,4 +467,4 @@ function evaluateCompletion(
 - 语义相似但文字完全不同的表达
 - 复杂公式自动转读法
 - 多语言混读优化
-- AI 语义完成判断z
+- AI 语义完成判断

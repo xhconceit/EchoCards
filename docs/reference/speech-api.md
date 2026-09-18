@@ -16,7 +16,9 @@
 
 Android 系统服务的生命周期、权限和错误必须封装在语音模块内部。
 
-本文中的接口片段用于表达契约，是设计伪代码；Android 实现使用 Kotlin 接口、`data class`、`sealed interface`、协程与 `Flow`。
+本文中的 Kotlin 接口是待实现的设计契约，使用 `data class`、`sealed interface`、协程与 `Flow`。下文流程图中的 `completed`、`partial_result` 等事件名，分别对应 Kotlin 的 `Completed`、`PartialResult` 等类型。
+
+Engine 在发起语音操作前开始收集事件流；事件流不重放上一操作的事件，并须保证当前操作的终止事件不会丢失。退出时取消收集任务并释放适配器。权限请求由 Android UI 层承接 Activity Result 流程，领域接口不持有 Activity。
 
 ## 2. 模块边界
 
@@ -51,39 +53,33 @@ app/src/main/java/.../
     └── SpeechErrorMapper.kt
 ```
 
-第一版由 Android 原生应用直接调用系统语音服务，不经过 JS 桥接或第三方跨平台封装。
+第一版由 Kotlin 适配器直接调用 Android 系统语音服务。
 
 ## 4. 设备能力
 
-```ts
-export interface SpeechCapabilities {
-  synthesisAvailable: boolean;
-  recognitionAvailable: boolean;
-  microphonePermission:
-    | 'undetermined'
-    | 'granted'
-    | 'denied'
-    | 'restricted';
+```kotlin
+enum class MicrophonePermission { UNDETERMINED, GRANTED, DENIED, RESTRICTED }
 
-  supportedRecognitionLanguages: string[];
-  supportedSynthesisLanguages: string[];
-
-  onDeviceRecognitionAvailable: boolean;
-}
+data class SpeechCapabilities(
+    val synthesisAvailable: Boolean,
+    val recognitionAvailable: Boolean,
+    val microphonePermission: MicrophonePermission,
+    val supportedRecognitionLanguages: List<String>,
+    val supportedSynthesisLanguages: List<String>,
+    val onDeviceRecognitionAvailable: Boolean,
+)
 ```
+
+`RESTRICTED` 仅表示设备策略等限制；普通拒绝映射为 `DENIED`。适配器需要结合权限状态和请求历史区分首次请求与拒绝。
 
 `onDeviceRecognitionAvailable` 表示当前设备存在端侧识别能力，不表示所有语言都可以离线识别。
 
 提供能力检查接口：
 
-```ts
-export interface SpeechCapabilityService {
-  getCapabilities(
-    language?: string,
-  ): Promise<SpeechCapabilities>;
-
-  requestMicrophonePermission():
-    Promise<SpeechCapabilities['microphonePermission']>;
+```kotlin
+interface SpeechCapabilityService {
+    suspend fun getCapabilities(language: String? = null): SpeechCapabilities
+    suspend fun requestMicrophonePermission(): MicrophonePermission
 }
 ```
 
@@ -91,43 +87,31 @@ export interface SpeechCapabilityService {
 
 ## 5. 朗读接口
 
-```ts
-export interface SpeakRequest {
-  operationId: string;
-  text: string;
-  language: string;
-  rate: number;
+```kotlin
+data class SpeakRequest(
+    val operationId: String,
+    val text: String,
+    val language: String,
+    val rate: Double,
+)
+
+sealed interface SpeechPlayerEvent {
+    val operationId: String
+
+    data class Started(override val operationId: String) : SpeechPlayerEvent
+    data class Completed(override val operationId: String) : SpeechPlayerEvent
+    data class Stopped(override val operationId: String) : SpeechPlayerEvent
+    data class Error(
+        override val operationId: String,
+        val error: SpeechError,
+    ) : SpeechPlayerEvent
 }
 
-export type SpeechPlayerEvent =
-  | {
-      type: 'started';
-      operationId: string;
-    }
-  | {
-      type: 'completed';
-      operationId: string;
-    }
-  | {
-      type: 'stopped';
-      operationId: string;
-    }
-  | {
-      type: 'error';
-      operationId: string;
-      error: SpeechError;
-    };
-
-export interface SpeechPlayer {
-  speak(request: SpeakRequest): Promise<void>;
-
-  stop(operationId?: string): Promise<void>;
-
-  addListener(
-    listener: (event: SpeechPlayerEvent) => void,
-  ): () => void;
-
-  dispose(): Promise<void>;
+interface SpeechPlayer {
+    val events: kotlinx.coroutines.flow.Flow<SpeechPlayerEvent>
+    suspend fun speak(request: SpeakRequest)
+    suspend fun stop(operationId: String? = null)
+    suspend fun dispose()
 }
 ```
 
@@ -143,59 +127,41 @@ export interface SpeechPlayer {
 
 ## 6. 识别接口
 
-```ts
-export interface RecognitionRequest {
-  operationId: string;
-  language: string;
-  partialResults: boolean;
-  preferOnDevice: boolean;
+```kotlin
+data class RecognitionRequest(
+    val operationId: String,
+    val language: String,
+    val partialResults: Boolean,
+    val preferOnDevice: Boolean,
+)
+
+sealed interface SpeechRecognizerEvent {
+    val operationId: String
+
+    data class Ready(override val operationId: String) : SpeechRecognizerEvent
+    data class SpeechStarted(override val operationId: String) : SpeechRecognizerEvent
+    data class PartialResult(
+        override val operationId: String,
+        val transcript: String,
+    ) : SpeechRecognizerEvent
+    data class FinalResult(
+        override val operationId: String,
+        val transcript: String,
+    ) : SpeechRecognizerEvent
+    data class SpeechEnded(override val operationId: String) : SpeechRecognizerEvent
+    data class Stopped(override val operationId: String) : SpeechRecognizerEvent
+    data class Error(
+        override val operationId: String,
+        val error: SpeechError,
+    ) : SpeechRecognizerEvent
 }
 
-export type SpeechRecognizerEvent =
-  | {
-      type: 'ready';
-      operationId: string;
-    }
-  | {
-      type: 'speech_started';
-      operationId: string;
-    }
-  | {
-      type: 'partial_result';
-      operationId: string;
-      transcript: string;
-    }
-  | {
-      type: 'final_result';
-      operationId: string;
-      transcript: string;
-    }
-  | {
-      type: 'speech_ended';
-      operationId: string;
-    }
-  | {
-      type: 'stopped';
-      operationId: string;
-    }
-  | {
-      type: 'error';
-      operationId: string;
-      error: SpeechError;
-    };
-
-export interface SpeechRecognizer {
-  start(request: RecognitionRequest): Promise<void>;
-
-  stop(operationId?: string): Promise<void>;
-
-  cancel(operationId?: string): Promise<void>;
-
-  addListener(
-    listener: (event: SpeechRecognizerEvent) => void,
-  ): () => void;
-
-  dispose(): Promise<void>;
+interface SpeechRecognizer {
+    val events: kotlinx.coroutines.flow.Flow<SpeechRecognizerEvent>
+    suspend fun start(request: RecognitionRequest)
+    suspend fun stop(operationId: String? = null)
+    suspend fun cancel(operationId: String? = null)
+    suspend fun dispose()
 }
 ```
 
@@ -219,27 +185,19 @@ export interface SpeechRecognizer {
 
 ## 7. 错误格式
 
-```ts
-export type SpeechErrorCode =
-  | 'PERMISSION_DENIED'
-  | 'RECOGNITION_UNAVAILABLE'
-  | 'SYNTHESIS_UNAVAILABLE'
-  | 'LANGUAGE_UNSUPPORTED'
-  | 'NO_SPEECH'
-  | 'NETWORK_REQUIRED'
-  | 'NETWORK_ERROR'
-  | 'AUDIO_BUSY'
-  | 'AUDIO_INTERRUPTED'
-  | 'RECOGNITION_TIMEOUT'
-  | 'CANCELLED'
-  | 'INTERNAL_ERROR';
-
-export interface SpeechError {
-  code: SpeechErrorCode;
-  message: string;
-  nativeCode: string | null;
-  recoverable: boolean;
+```kotlin
+enum class SpeechErrorCode {
+    PERMISSION_DENIED, RECOGNITION_UNAVAILABLE, SYNTHESIS_UNAVAILABLE,
+    LANGUAGE_UNSUPPORTED, NO_SPEECH, NETWORK_REQUIRED, NETWORK_ERROR,
+    AUDIO_BUSY, AUDIO_INTERRUPTED, RECOGNITION_TIMEOUT, CANCELLED, INTERNAL_ERROR,
 }
+
+data class SpeechError(
+    val code: SpeechErrorCode,
+    val message: String,
+    val nativeCode: String?,
+    val recoverable: Boolean,
+)
 ```
 
 原生平台错误必须先转换为统一错误码，再传给 Learning Engine。
@@ -248,33 +206,24 @@ export interface SpeechError {
 
 ## 8. 音频状态接口
 
-```ts
-export type AudioInterruptionEvent =
-  | {
-      type: 'interruption_started';
-      reason: string | null;
-    }
-  | {
-      type: 'interruption_ended';
-      shouldResume: boolean;
-    }
-  | {
-      type: 'route_changed';
-      route: 'speaker' | 'receiver' | 'headphones' | 'bluetooth';
-    };
+```kotlin
+enum class AudioRoute { SPEAKER, RECEIVER, HEADPHONES, BLUETOOTH }
 
-export interface AudioFocusController {
-  configureForPlayback(): Promise<void>;
-  configureForRecognition(): Promise<void>;
-  deactivate(): Promise<void>;
+sealed interface AudioInterruptionEvent {
+    data class InterruptionStarted(val reason: String?) : AudioInterruptionEvent
+    data class InterruptionEnded(val shouldResume: Boolean) : AudioInterruptionEvent
+    data class RouteChanged(val route: AudioRoute) : AudioInterruptionEvent
+}
 
-  addInterruptionListener(
-    listener: (event: AudioInterruptionEvent) => void,
-  ): () => void;
+interface AudioFocusController {
+    val interruptions: kotlinx.coroutines.flow.Flow<AudioInterruptionEvent>
+    suspend fun configureForPlayback()
+    suspend fun configureForRecognition()
+    suspend fun deactivate()
 }
 ```
 
-即使系统提示 `shouldResume: true`，App 也不自动开启麦克风。中断结束后保持暂停，等待用户点击继续。
+即使系统提示 `shouldResume = true`，App 也不自动开启麦克风。中断结束后保持暂停，等待用户点击继续。
 
 ## 9. 朗读与识别切换
 
@@ -283,7 +232,7 @@ export interface AudioFocusController {
 ```mermaid
 sequenceDiagram
     participant Engine
-    participant Audio as Audio Session
+    participant Audio as Android Audio Focus
     participant Player
     participant Recognizer
 
@@ -366,24 +315,24 @@ Android 适配器使用 Kotlin 封装：
 
 为了在没有真机语音环境时开发页面，需要提供模拟实现：
 
-```ts
-export interface SpeechServices {
-  player: SpeechPlayer;
-  recognizer: SpeechRecognizer;
-  capabilities: SpeechCapabilityService;
-  audioFocus: AudioFocusController;
-}
+```kotlin
+data class SpeechServices(
+    val player: SpeechPlayer,
+    val recognizer: SpeechRecognizer,
+    val capabilities: SpeechCapabilityService,
+    val audioFocus: AudioFocusController,
+)
 ```
 
 开发环境可以注入：
 
-```ts
-const mockSpeechServices: SpeechServices = {
-  player: new MockSpeechPlayer(),
-  recognizer: new MockSpeechRecognizer(),
-  capabilities: new MockSpeechCapabilityService(),
-  audioFocus: new MockAudioFocusController(),
-};
+```kotlin
+val mockSpeechServices = SpeechServices(
+    player = MockSpeechPlayer(),
+    recognizer = MockSpeechRecognizer(),
+    capabilities = MockSpeechCapabilityService(),
+    audioFocus = MockAudioFocusController(),
+)
 ```
 
 模拟识别器应支持：
