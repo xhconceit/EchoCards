@@ -49,7 +49,6 @@ interface LearningEngine {
     suspend fun pause()
     suspend fun resume()
     suspend fun replay()
-    suspend fun skip()
     suspend fun next()
     suspend fun previous()
     suspend fun flip()
@@ -69,7 +68,7 @@ fun previousIndex(current: Int, size: Int) = (current - 1 + size) % size
 左滑调用 `next()`，右滑调用 `previous()`。两者都先使旧 `operationId` 失效，再停止朗读和识别、更新本地位置、显示目标卡片正面，并按当前自动模式启动流程。
 
 - 手动模式下一张记录 `viewed`，上一张不创建记录。
-- 自动跟读中主动下一张按 `skip` 处理。
+- 自动跟读中主动切卡停止当前朗读和识别，不产生跟读完成记录。
 - 自动播放切卡只更新位置。
 - 卡组为空时不创建 Engine，入口保持禁用。
 
@@ -77,7 +76,7 @@ fun previousIndex(current: Int, size: Int) = (current - 1 + size) % size
 
 每次朗读、重读、切卡、切换模式或恢复都创建新的 `operationId`。系统回调只有在 ID 与当前状态一致时才生效。
 
-以下行为先使 ID 失效，再取消资源：暂停、重读、左右切卡、跳过、模式切换、进入后台和退出页面。相同跟读操作使用完成锁，保证最多推进一次。
+以下行为先使 ID 失效，再取消资源：暂停、重读、左右切卡、模式切换、进入后台和退出页面。相同跟读操作使用完成锁，保证最多推进一次。
 
 ## 6. 手动学习
 
@@ -116,7 +115,7 @@ stateDiagram-v2
 5. 等待 `autoAdvanceDelayMs`。
 6. 左向切换下一张，创建新操作并朗读。
 
-用户跳过时保存 `skipped` 并直接进入下一张，不展示当前卡片的快速记忆点。暂停、重读或模式切换清除临时匹配进度。
+用户主动切卡时取消当前跟读并清除临时匹配进度，不保存跟读完成记录。暂停、重读或模式切换也清除临时匹配进度。
 
 ## 8. 自动播放
 
@@ -159,7 +158,7 @@ stateDiagram-v2
 - 权限拒绝：提供重试、系统设置和手动学习。
 - 识别不可用：提供重试或手动学习。
 - 保存失败：不切卡，保留当前状态并重试。
-- 识别多次无结果：停止自动重启，提供重读、跳过或手动学习。
+- 识别多次无结果：停止自动重启，提供重读或手动学习。
 
 ## 12. 验收重点
 

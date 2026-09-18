@@ -27,7 +27,6 @@ enum class LearningMode(val value: String) {
 enum class AttemptOutcome(val value: String) {
     VIEWED("viewed"),
     READ_COMPLETED("read_completed"),
-    SKIPPED("skipped"),
 }
 
 data class Deck(
@@ -117,7 +116,6 @@ val previousIndex = (currentIndex - 1 + cardCount) % cardCount
 |---|---|
 | `viewed` | 手动模式切换到下一张 |
 | `read_completed` | 自动跟读达到完成条件 |
-| `skipped` | 自动跟读中用户主动跳过 |
 
 自动播放不产生“掌握”或完成记录，只更新当前位置。返回上一张不创建记录。`coverage` 表示文本覆盖率，不是发音分数或掌握程度。
 
@@ -185,7 +183,7 @@ CREATE TABLE card_attempts (
     mode IN ('manual', 'follow_along', 'auto_play')
   ),
   outcome TEXT NOT NULL CHECK (
-    outcome IN ('viewed', 'read_completed', 'skipped')
+    outcome IN ('viewed', 'read_completed')
   ),
   coverage REAL CHECK (coverage IS NULL OR coverage BETWEEN 0 AND 1),
   ending_matched INTEGER CHECK (ending_matched IS NULL OR ending_matched IN (0, 1)),

@@ -15,7 +15,7 @@
    青碧 #0E9A9A  —— 仅图形与大字（环、呼吸点、焦点）
    青碧深 #0A7373 —— 白字填充与小号文字（AA）
    卡堆构造（三屏统一）：顶卡 + 一张以右下角为轴的 45° 卡
-   按压反馈：液态玻璃 —— 高光 + 暗角 + 边缘增厚 + 压弯
+   按压反馈：轻微颜色变化，不改变控件位置与形状
    ============================================================ */
 :root{
   --bg:#F7F8F8;
@@ -85,7 +85,10 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
 /* ---------- 首页 · 卡组行 ---------- */
 .decks{list-style:none}
+.decks:not(:empty){margin-top:18px}
+.decks + .empty-note + [data-deck-create]{width:100%;margin-top:18px}
 .deck{display:flex;align-items:center;gap:15px;padding:14px;margin-bottom:10px;border:1px solid var(--border);border-radius:16px;background:var(--surface);cursor:pointer}
+.deck:last-child{margin-bottom:0}
 .d-main{flex:1;min-width:0;display:flex;flex-direction:column}
 .d-name{display:block;font-size:15px;font-weight:600;letter-spacing:-.02em}
 .d-meta{display:block;margin-top:3px;font-size:12px;color:var(--muted)}
@@ -104,8 +107,8 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 }
 
 /* ---------- 底部 Tab：仅 首页 / 我的 ---------- */
-.tabbar{flex:none;display:flex;padding:8px 0 24px;border-top:1px solid var(--border);background:var(--surface)}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;font:inherit;font-size:11px;letter-spacing:0;color:var(--muted);cursor:pointer}
+.tabbar{flex:none;display:flex;gap:8px;padding:8px 20px 20px;border-top:1px solid var(--border);background:var(--surface)}
+.tab{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;border-radius:12px;background:none;font:inherit;font-size:11px;letter-spacing:0;color:var(--muted);cursor:pointer}
 .tab svg{width:22px;height:22px}
 .tab.on{color:var(--teal-deep);font-weight:600}
 
@@ -118,6 +121,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .btn{flex:1;height:48px;display:grid;place-items:center;border:0;border-radius:14px;font:inherit;font-size:15px;font-weight:600;letter-spacing:-.01em;cursor:pointer}
 .btn.primary{background:var(--teal-deep);color:#fff}
 .btn.ghost{background:var(--surface);color:var(--fg);border:1px solid #D9DEDE}
+.btn.danger{background:#B93434;color:#fff}
 .cards{list-style:none}
 .crow{display:flex;align-items:center;gap:16px;height:60px;border-bottom:1px solid var(--border)}
 .crow:last-child{border-bottom:0}
@@ -133,19 +137,33 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .sheet.on{opacity:1;pointer-events:auto}
 .scrim{position:absolute;inset:0;background:rgba(12,15,16,.42)}
 .panel{position:absolute;left:0;right:0;bottom:0;max-height:86%;display:flex;flex-direction:column;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:0 -12px 44px rgba(0,0,0,.20)}
-.p-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:20px 12px 12px 20px}
+.p-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:20px 20px 12px}
 .p-head h2{font-size:17px;font-weight:700;letter-spacing:-.03em}
 .p-body{flex:1;overflow-y:auto;padding:6px 20px 18px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none}
 .p-body::-webkit-scrollbar{display:none}
 .p-foot{flex:none;display:flex;gap:10px;padding:14px 20px 22px;border-top:1px solid var(--border)}
+.confirm-panel{max-height:none}
+.sheet.centered > .panel{left:24px;right:24px;top:50%;bottom:auto;max-height:calc(100% - 48px);border-radius:20px;transform:translateY(-50%);box-shadow:0 18px 54px rgba(0,0,0,.24)}
+.confirm-panel .p-body{padding-top:4px;padding-bottom:20px}
+.confirm-message{color:var(--muted);font-size:14px;line-height:1.65}
+.mode-options{gap:10px;padding-top:8px;padding-bottom:22px}
+.mode-options .btn{flex:none;width:100%;height:48px}
 .field{display:flex;flex-direction:column;gap:7px}
 .field > span{font-size:12px;color:var(--muted)}
 .field input{width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:#FBFCFC;font:inherit;font-size:15px;color:var(--fg);outline:none;transition:border-color .16s ease,background .16s ease,box-shadow .16s ease}
 .field input:focus{border-color:var(--teal);background:var(--surface)}
 .crow select{max-width:48%;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;font-size:13px;color:var(--fg)}
-.card-row-main{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:0;background:none;font:inherit;color:var(--fg);cursor:pointer}
-.reorder{width:30px;height:36px;flex:none;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer}
-.reorder:disabled{opacity:.3;cursor:default}
+.card-row{position:relative;overflow:hidden;cursor:grab;touch-action:none;transition:opacity .18s ease,box-shadow .18s ease}
+.card-row:active{cursor:grabbing}
+.card-row-main{position:relative;z-index:2;flex:1;min-width:0;width:100%;height:100%;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:0;background:var(--bg);font:inherit;color:var(--fg);cursor:inherit;transition:transform .18s ease}
+.card-row.gesturing .card-row-main{transition:none}
+.delete-action{position:absolute;z-index:1;top:0;right:0;width:76px;height:100%;border:0;background:#B93434;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.card-row.revealed .card-row-main{transform:translateX(-76px)}
+.crow.sorting{border:1px dashed #BFD8D8;border-radius:12px;opacity:.16}
+.sort-ghost{position:fixed!important;z-index:999;pointer-events:none;border:1px solid #CFE4E4!important;border-radius:12px;background:var(--surface);box-shadow:0 14px 34px rgba(16,19,20,.18);opacity:.98;transform:scale(1.02);transition:none;will-change:transform}
+.sort-ghost .delete-action{display:none}
+.sort-ghost .card-row-main{transform:none;background:var(--surface)}
+.cards.sorting .crow:not(.sorting){transition:transform .16s ease}
 .btn:disabled{opacity:.55;cursor:default}
 .field textarea{width:100%;min-height:88px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:#FBFCFC;font:inherit;font-size:15px;color:var(--fg);resize:vertical}
 .field textarea:focus{outline:none;border-color:var(--teal);background:var(--surface)}
@@ -165,8 +183,8 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 .counter{margin-left:auto;margin-right:12px;font:500 12px/1 var(--mono);letter-spacing:.16em;color:var(--muted)}
 .counter b{color:var(--fg);font-weight:500}
 
-.study-body{flex:1;display:grid;place-items:center;padding:0 26px 100px}
-.stack{position:relative;width:100%;height:400px}
+.study-body{flex:1;display:grid;place-items:center;padding:64px 26px 0}
+.stack{position:relative;width:100%;height:400px;perspective:1100px}
 
 .behind{
   position:absolute;right:6px;bottom:6px;width:110px;height:110px;
@@ -174,20 +192,22 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
   transform-origin:100% 100%;transform:rotate(-45deg);z-index:1;
 }
 
-.card{position:absolute;inset:0;z-index:3;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:0 14px 34px rgba(16,19,20,.08);overflow:hidden;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
-.card-face{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 32px 104px;transition:opacity .16s ease}
-.card-face.back{opacity:0}
-.card.flipped .card-face.front{opacity:0}
-.card.flipped .card-face.back{opacity:1}
+.card-motion{position:absolute;inset:0;z-index:3;cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.card-motion.dragging{cursor:grabbing}
+.card{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.2,.7,.2,1)}
+.card.flipped{transform:rotateY(180deg)}
+.card-flipper{position:absolute;inset:0;color:inherit;font:inherit;cursor:pointer;transform-style:preserve-3d}
+.card-face{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 32px 104px;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:0 14px 34px rgba(16,19,20,.08);overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.card-face.back{transform:rotateY(180deg)}
 .card-face .w{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.2;text-align:center}
 .card-face .r{font-size:17px;color:var(--muted);letter-spacing:0;line-height:1.65;text-align:center}
 .card-face.back .w{font-size:24px}
 
 .audio{
-  position:absolute;left:50%;bottom:24px;transform:translateX(-50%);
+  position:absolute;z-index:4;left:50%;bottom:24px;transform:translateX(-50%);
   width:48px;height:48px;display:grid;place-items:center;
   border:1px solid #D9DEDE;border-radius:50%;background:var(--surface);color:var(--fg);
-  cursor:pointer;
+  cursor:pointer;backface-visibility:hidden;-webkit-backface-visibility:hidden;
 }
 .audio svg.ico{width:19px;height:19px}
 .audio .bars{display:none;align-items:flex-end;gap:2.5px;height:14px}
@@ -205,126 +225,29 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 @keyframes reDeal{0%{transform:translateY(0)}45%{transform:translateY(10px)}100%{transform:translateY(0)}}
 @keyframes nudge{0%{transform:rotate(-45deg) scale(1)}45%{transform:rotate(-45deg) scale(1.035)}100%{transform:rotate(-45deg) scale(1)}}
 
-/* ============================================================
-   按压反馈 —— 液态玻璃
-   ------------------------------------------------------------
-   上一版两个硬伤，这版都根治：
-   1) 一条 position:relative 把 .fab 与 .audio 从 absolute 打回
-      文档流 —— 悬浮加号掉进列表、发音键被 left:50% 推飞。
-      这版只给「本来就是 relative」的控件补上下文，两个绝对定位
-      控件排除在外。
-   2) 玻璃层只有白色高光 —— 铺在白卡上等于白铺白，全隐形。
-      这版高光与暗角同时给：左上打白反光，右下压冷暗角，
-      明暗一夹，白底上才有「一层玻璃浮起来」的厚度。
-   按下 90ms 到位（快），松手 340ms 弹簧回位带过冲（慢）。
-   分层：主按钮 / FAB / 复习卡明显；图标键与底部 Tab 只留掠光。
-   ============================================================ */
-
-/* 只给本来就是 relative 的控件补定位上下文。
-   .fab 与 .audio 已经是 absolute —— 绝不在此列。 */
-.icn,.tab,.btn,.deck,.mode-btn{position:relative}
-
-.icn,.tab,.btn,.fab,.deck,.audio,.mode-btn{
-  overflow:hidden;
+/* ---------- 按压反馈：只改变颜色，不改变位置或形状 ---------- */
+.icn,.tab,.btn,.fab,.deck,.audio,.mode-btn,.delete-action{
   -webkit-tap-highlight-color:transparent;
-  transition:
-    transform .34s cubic-bezier(.34,1.62,.44,1),
-    box-shadow .34s cubic-bezier(.34,1.62,.44,1),
-    background-color .22s ease,
-    border-color .22s ease,
-    color .22s ease,
-    opacity .22s ease;
+  transition:background-color .12s ease,border-color .12s ease,color .12s ease,opacity .12s ease;
 }
-
-/* —— 玻璃层：休息时透明且缩小，按下时铺满 —— */
-.icn::after,.tab::after,.btn::after,.fab::after,.deck::after,
-.audio::after,.mode-btn::after{
-  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  opacity:0;z-index:1;
-  background:
-    radial-gradient(132% 104% at 12% -10%,
-      rgba(255,255,255,.98) 0%,
-      rgba(255,255,255,.44) 18%,
-      rgba(255,255,255,0) 46%),
-    linear-gradient(324deg,
-      rgba(16,19,20,.13) 0%,
-      rgba(16,19,20,0) 43%);
-  transform:scale(.86);
-  transition:opacity .34s cubic-bezier(.22,.61,.36,1),
-             transform .34s cubic-bezier(.34,1.6,.44,1);
-}
-
-/* —— 明显档：两个学习按钮、悬浮加号、首页复习卡 —— */
-.btn:active,.fab:active{
-  transition-duration:.09s;
-  transition-timing-function:cubic-bezier(.22,.61,.36,1);
-}
-.btn:active{transform:scale(1.024,.962)}
-.btn.primary:active{
-  background:#0B6E6E;
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.92),
-             inset 0 -3px 8px rgba(0,0,0,.22),
-             0 2px 8px rgba(10,115,115,.20);
-}
-.btn.ghost:active{
-  background:#F3FAFA;
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),
-             inset 0 -2.5px 7px rgba(16,19,20,.14),
-             inset 0 0 0 1px rgba(16,19,20,.04);
-}
-.fab:active{
-  transform:scale(.946);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.88),
-             inset 0 -3px 9px rgba(0,0,0,.26),
-             0 2px 8px rgba(10,115,115,.22);
-}
-.btn:active::after,.fab:active::after{
-  opacity:1;transform:scale(1);transition-duration:.09s;
-}
-
-/* —— 极轻档：图标键、底部 Tab、卡组行、下拉、方式按钮、发音键 —— */
-.icn:active,.tab:active,.deck:active,.mode-btn:active,.audio:active{
-  transition-duration:.09s;
-  transition-timing-function:cubic-bezier(.22,.61,.36,1);
-}
-.icn:active{
-  background:rgba(16,19,20,.055);
-  transform:scale(.94);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -2px 5px rgba(16,19,20,.10);
-}
-.tab:active{
-  color:var(--fg);
-  transform:scale(.94);
-}
-.deck:active{
-  background:#F3F9F9;border-color:#D5DCDC;
-  transform:scale(.992);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -2px 6px rgba(16,19,20,.11);
-}
-.mode-btn:active{opacity:.66;transform:scale(.97)}
-.audio:active{
-  transform:translateX(-50%) scale(.94);
-  border-color:#CFE4E4;background:#F1F8F8;
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -2px 6px rgba(16,19,20,.13);
-}
-.icn:active::after,.deck:active::after,
-.audio:active::after{
-  opacity:.66;transform:scale(1);transition-duration:.09s;
-}
-.tab:active::after,.mode-btn:active::after{
-  opacity:.44;transform:scale(1);transition-duration:.09s;
-}
+.btn.primary:active,.fab:active{background:#075F5F}
+.btn.danger:active,.delete-action:active{background:#982828}
+.btn.ghost:active,.icn:active,.tab:active,.mode-btn:active{background:#ECEFEF}
+.deck:active{background:#F0F4F4;border-color:#D5DCDC}
+.audio:active{border-color:#CFE4E4;background:#E8F3F3}
+.card-row-main:active{background:#EEF1F1}
 
 /* 输入框走焦点环，不给玻璃 */
 .search:focus-within{border-color:var(--teal);background:var(--surface);box-shadow:0 0 0 3px rgba(14,154,154,.10)}
 .field input:focus{box-shadow:0 0 0 3px rgba(14,154,154,.10)}
 .study-status{position:absolute;left:24px;right:24px;bottom:104px;text-align:center;color:var(--muted);font-size:13px;min-height:20px}
-.study-nav{position:absolute;left:20px;right:20px;bottom:143px;display:flex;justify-content:space-between;gap:12px}
-.study-nav button{padding:5px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;font-size:12px;color:var(--muted);cursor:pointer}
+.study-status:empty{display:none}
 .study-controls{position:absolute;left:20px;right:20px;bottom:34px;display:flex;gap:8px}
 .study-controls .btn{height:44px;font-size:13px}
 .demo-note{font-size:11px;color:var(--muted);line-height:1.5}
-.empty-note{padding:22px 8px;color:var(--muted);font-size:13px;text-align:center}
+.empty-note{padding:16px 8px;color:var(--muted);font-size:13px;text-align:center}
+.field-error{margin:4px 0 0;color:#A93636;font-size:12px;line-height:1.5}
+.field [aria-invalid="true"]{border-color:#A93636}
 
 @media (max-width:900px){body{padding:28px 16px 56px}}
 
@@ -332,13 +255,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
   .scr.auto .live{animation:none;opacity:.9}
   .stack.dealing .card,.stack.dealing .behind{animation:none}
   .audio .bars i{animation:none}
-  .icn::after,.tab::after,.btn::after,.fab::after,.deck::after,
-  .audio::after,.mode-btn::after{
-    transform:none;transition:opacity .12s linear;
-  }
-  .btn:active,.fab:active,
-  .icn:active,.tab:active,.deck:active,.sel:active,.mode-btn:active{transform:none}
-  .audio:active{transform:translateX(-50%)}
+  .card{transition:none}
 }
 </style>
 </head>
@@ -422,8 +339,6 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
           <input type="text" placeholder="搜索卡组">
         </label>
 
-        <div class="list-head">全部卡组</div>
-        <p class="demo-note">交互原型使用演示卡组；Android 首次安装显示空状态。</p>
         <ul class="decks" data-deck-list></ul>
         <p class="empty-note" data-search-empty hidden>没有找到匹配的卡组</p>
         <button class="btn ghost" type="button" data-deck-create>＋ 创建卡组</button>
@@ -478,7 +393,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
         <div class="actions"><button class="btn primary" data-mode-open type="button">开始学习</button></div>
 
-        <div class="list-head">卡片 <span class="cnt" data-card-count>3</span></div>
+        <div class="list-head">卡片</div>
         <ul class="cards" data-card-list></ul>
         <p class="empty-note" data-card-empty hidden>这个卡组还没有知识点。先添加第一张卡片。</p>
       </div>
@@ -492,19 +407,16 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <div class="panel">
           <header class="p-head">
             <h2 data-card-form-title>添加卡片</h2>
-            <button class="icn" data-close type="button" aria-label="关闭">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg>
-            </button>
           </header>
           <div class="p-body">
             <label class="field"><span>标题</span><input data-card-title type="text" placeholder="例如：惯性"></label>
             <label class="field"><span>正文</span><textarea data-card-content placeholder="输入知识点正文"></textarea></label>
             <label class="field"><span>跟读文本（可选）</span><textarea data-card-speech placeholder="留空时使用正文"></textarea></label>
             <label class="field"><span>快速记忆点（可选）</span><textarea data-card-tip placeholder="显示在卡片背面"></textarea></label>
+            <p class="field-error" data-card-error role="alert" hidden></p>
           </div>
           <footer class="p-foot">
             <button class="btn ghost" data-close type="button">取消</button>
-            <button class="btn ghost" data-card-delete type="button" hidden>删除</button>
             <button class="btn primary" data-card-save type="button">保存</button>
           </footer>
         </div>
@@ -512,14 +424,14 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
     </section>
 
-    <div class="sheet" data-mode-sheet>
+    <div class="sheet centered" data-mode-sheet role="dialog" aria-modal="true" aria-label="选择学习方式">
       <div class="scrim" data-mode-close></div>
       <div class="panel">
         <header class="p-head"><h2>选择学习方式</h2></header>
-        <div class="p-body">
-          <button class="btn primary" data-mode-choice="0" type="button">手动学习</button>
-          <button class="btn ghost" data-mode-choice="1" type="button">自动跟读</button>
-          <button class="btn ghost" data-mode-choice="2" type="button">自动播放</button>
+        <div class="p-body mode-options">
+          <button class="btn primary" data-mode-choice="0" type="button" aria-pressed="true">手动学习</button>
+          <button class="btn ghost" data-mode-choice="1" type="button" aria-pressed="false">自动跟读</button>
+          <button class="btn ghost" data-mode-choice="2" type="button" aria-pressed="false">自动播放</button>
         </div>
       </div>
     </div>
@@ -531,12 +443,24 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         <div class="p-body">
           <label class="field"><span>卡组名称</span><input data-deck-title type="text" placeholder="例如：初中物理"></label>
           <label class="field"><span>卡组说明（可选）</span><textarea data-deck-description placeholder="这个卡组学习什么？"></textarea></label>
-          <p class="demo-note">此页面为功能演示；保存只影响当前原型页面。</p>
+          <p class="field-error" data-deck-error role="alert" hidden></p>
         </div>
         <footer class="p-foot">
           <button class="btn ghost" data-deck-close type="button">取消</button>
           <button class="btn ghost" data-deck-delete type="button" hidden>删除</button>
           <button class="btn primary" data-deck-save type="button">保存</button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="sheet" data-confirm-sheet role="dialog" aria-modal="true" aria-label="确认操作">
+      <div class="scrim" data-confirm-cancel></div>
+      <div class="panel confirm-panel">
+        <header class="p-head"><h2 data-confirm-title>确认操作</h2></header>
+        <div class="p-body"><p class="confirm-message" data-confirm-message></p></div>
+        <footer class="p-foot">
+          <button class="btn ghost" data-confirm-cancel type="button">取消</button>
+          <button class="btn danger" data-confirm-ok type="button">确认</button>
         </footer>
       </div>
     </div>
@@ -560,30 +484,31 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       <div class="study-body">
         <div class="stack" data-stack>
           <div class="behind"></div>
-          <div class="card" data-card tabindex="0" role="button" aria-label="翻转卡片；左右方向键切换卡片">
-            <div class="card-face front">
-              <span class="w" data-front-w>惯性</span>
-              <span class="r" data-front-r>物体保持原来运动状态不变的性质叫作惯性。</span>
+          <div class="card-motion" data-card-motion>
+            <div class="card" data-card>
+              <div class="card-flipper" data-card-flipper tabindex="0" role="button" aria-label="翻转卡片；左右方向键切换卡片">
+                <span class="card-face front">
+                  <span class="w" data-front-w>惯性</span>
+                  <span class="r" data-front-r>物体保持原来运动状态不变的性质叫作惯性。</span>
+                </span>
+                <span class="card-face back">
+                  <span class="w" data-back-w>快速记忆点</span>
+                  <span class="r" data-back-r>不受力，就保持原来的状态。</span>
+                </span>
+              </div>
+              <button class="audio" type="button" aria-label="播放朗读" data-audio>
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.4 9.3a3.9 3.9 0 0 1 0 5.4"/><path d="M18 6.6a7.4 7.4 0 0 1 0 10.8"/></svg>
+                <span class="bars"><i></i><i></i><i></i></span>
+              </button>
             </div>
-            <div class="card-face back">
-              <span class="w" data-back-w>快速记忆点</span>
-              <span class="r" data-back-r>不受力，就保持原来的状态。</span>
-            </div>
-            <button class="audio" type="button" aria-label="播放朗读" data-audio>
-              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.4 9.3a3.9 3.9 0 0 1 0 5.4"/><path d="M18 6.6a7.4 7.4 0 0 1 0 10.8"/></svg>
-              <span class="bars"><i></i><i></i><i></i></span>
-            </button>
           </div>
         </div>
       </div>
-      <div class="study-nav"><button data-previous type="button">‹ 上一张</button><button data-next type="button">下一张 ›</button></div>
-      <p class="study-status" data-status aria-live="polite">点击卡片查看快速记忆点 · 左滑下一张 / 右滑上一张</p>
+      <p class="study-status" data-status aria-live="polite"></p>
       <div class="study-controls" data-controls>
         <button class="btn ghost" data-pause type="button">暂停</button>
         <button class="btn ghost" data-replay type="button">重读</button>
-        <button class="btn ghost" data-skip type="button">跳过</button>
         <button class="btn ghost" data-speed type="button">速度 1.0×</button>
-        <button class="btn primary" data-complete type="button">跟读 +25%</button>
       </div>
     </section>
 
@@ -620,7 +545,9 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
     var studyScr  = root.querySelector('[data-scr="study"]');
     var stack     = root.querySelector('[data-stack]');
+    var cardMotion = root.querySelector('[data-card-motion]');
     var card      = root.querySelector('[data-card]');
+    var cardFlipper = root.querySelector('[data-card-flipper]');
     var frontW    = root.querySelector('[data-front-w]');
     var frontR    = root.querySelector('[data-front-r]');
     var backW     = root.querySelector('[data-back-w]');
@@ -634,8 +561,6 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     var controls  = root.querySelector('[data-controls]');
     var pauseBtn  = root.querySelector('[data-pause]');
     var replayBtn = root.querySelector('[data-replay]');
-    var skipBtn   = root.querySelector('[data-skip]');
-    var completeBtn = root.querySelector('[data-complete]');
     var speedBtn = root.querySelector('[data-speed]');
     var modeSheet = root.querySelector('[data-mode-sheet]');
     var modeOpen  = root.querySelector('[data-mode-open]');
@@ -655,12 +580,15 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     var mode = 0;
     var paused = false;
     var phase = 'ready';
-    var coverage = 0;
     var resumeAfterModeClose = false;
     var token = 0;
     var timers = [];
     var editingCard = null;
-    var drag = { on: false, sx: 0, sy: 0, dx: 0, moved: false, t0: 0 };
+    var sortDrag = null;
+    var rowGesture = null;
+    var revealedRow = null;
+    var drag = { on: false, axis: '', sx: 0, sy: 0, dx: 0, t0: 0 };
+    var transitioning = false;
 
     function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
     function stopTasks() {
@@ -683,13 +611,14 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         audio.classList.remove('playing');
         if (mode === 1) {
           phase = 'listening';
-          setStatus('轮到你读了 · 跟读进度 0%（模拟）');
+          setStatus('轮到你读了');
           paint();
+          later(showTipAndAdvance, 2200);
         } else if (mode === 2) {
           showTipAndAdvance();
         } else {
           phase = 'ready';
-          setStatus('朗读完成 · 点击卡片查看快速记忆点');
+          setStatus('朗读完成');
         }
       }, DEMO_AUDIO_MS / Number(settings.speechRate.value));
     }
@@ -701,6 +630,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       frontR.textContent = c.content;
       backW.textContent  = '快速记忆点';
       backR.textContent  = c.memoryTip || '暂无快速记忆点';
+      cardFlipper.setAttribute('aria-label', c.title + '，' + (card.classList.contains('flipped') ? '快速记忆点' : '正面') + '；按回车翻面，左右方向键切换卡片');
       count.textContent = pad2(idx + 1);
       total.textContent = cards.length;
       modeLabel.textContent = MODES[mode].name;
@@ -708,17 +638,14 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       audio.style.display = mode === 0 ? '' : 'none';
       controls.style.display = mode === 0 ? 'none' : 'flex';
       replayBtn.style.display = mode === 1 ? '' : 'none';
-      skipBtn.style.display = mode === 1 ? '' : 'none';
       speedBtn.style.display = mode === 2 ? '' : 'none';
       speedBtn.textContent = '速度 ' + Number(settings.speechRate.value).toFixed(1) + '×';
-      completeBtn.style.display = mode === 1 && phase === 'listening' ? '' : 'none';
       pauseBtn.textContent = paused ? '继续' : '暂停';
     }
 
     function runAuto() {
       if (mode === 0 || paused || !cards.length) return;
       stopTasks();
-      coverage = 0;
       studyScr.classList.add('auto');
       card.classList.remove('flipped');
       playAudio();
@@ -737,27 +664,31 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     }
 
     function move(direction, fromAuto) {
-      if (!cards.length) return;
+      if (!cards.length || transitioning) return;
+      transitioning = true;
+      drag.on = false;
+      cardMotion.classList.remove('dragging');
       stopTasks();
       phase = 'ready';
       var distance = direction > 0 ? -460 : 460;
-      card.style.transition = 'transform .28s ease, opacity .28s ease';
-      card.style.transform = 'translateX(' + distance + 'px) rotate(' + (direction > 0 ? -8 : 8) + 'deg)';
-      card.style.opacity = '0';
+      cardMotion.style.transition = 'transform .28s ease, opacity .28s ease';
+      cardMotion.style.transform = 'translateX(' + distance + 'px) rotate(' + (direction > 0 ? -8 : 8) + 'deg)';
+      cardMotion.style.opacity = '0';
 
       later(function () {
         idx = (idx + direction + cards.length) % cards.length;
         currentDeck.idx = idx;
-        paint();
         card.classList.remove('flipped');
-        card.style.transition = 'none';
-        card.style.transform = 'translateX(' + (-distance / 8) + 'px) scale(.975)';
-        card.style.opacity = '0';
+        paint();
+        cardMotion.style.transition = 'none';
+        cardMotion.style.transform = 'translateX(' + (-distance / 8) + 'px) scale(.975)';
+        cardMotion.style.opacity = '0';
         requestAnimationFrame(function () {
-          card.style.transition = 'transform .28s ease, opacity .28s ease';
-          card.style.transform = 'none';
-          card.style.opacity = '1';
-          setStatus('点击卡片查看快速记忆点 · 左滑下一张 / 右滑上一张');
+          cardMotion.style.transition = 'transform .28s ease, opacity .28s ease';
+          cardMotion.style.transform = 'none';
+          cardMotion.style.opacity = '1';
+          setStatus('');
+          later(function () { transitioning = false; }, 280);
           if ((fromAuto || mode !== 0) && !paused) later(runAuto, 320);
         });
         renderCards();
@@ -775,16 +706,17 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       target = ((target % MODES.length) + MODES.length) % MODES.length;
       var changed = target !== mode;
       stopTasks();
+      transitioning = false;
+      resetCard();
       mode = target;
       paused = false;
       phase = 'ready';
-      coverage = 0;
-      paint();
       card.classList.remove('flipped');
+      paint();
       if (animated && changed) reDeal();
-      setStatus(mode === 1 ? '自动跟读演示：朗读后点击“跟读 +25%”' :
+      setStatus(mode === 1 ? '自动跟读：先听一遍，然后跟读' :
         mode === 2 ? '自动播放演示：朗读后翻面并循环' :
-        '点击卡片查看快速记忆点 · 左滑下一张 / 右滑上一张');
+        '');
       if (mode !== 0 && studyScr.classList.contains('on')) runAuto();
     }
 
@@ -793,6 +725,8 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       resumeAfterModeClose = studyScr.classList.contains('on') && mode !== 0 && !paused;
       if (studyScr.classList.contains('on')) {
         stopTasks();
+        transitioning = false;
+        resetCard();
         if (resumeAfterModeClose) {
           paused = true;
           phase = 'paused';
@@ -801,61 +735,76 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         }
       }
       Array.prototype.forEach.call(root.querySelectorAll('[data-mode-choice]'), function (el) {
-        el.classList.toggle('primary', Number(el.getAttribute('data-mode-choice')) === selected);
-        el.classList.toggle('ghost', Number(el.getAttribute('data-mode-choice')) !== selected);
+        var active = Number(el.getAttribute('data-mode-choice')) === selected;
+        el.classList.toggle('primary', active);
+        el.classList.toggle('ghost', !active);
+        el.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
       modeSheet.classList.add('on');
+      sheetOpener = document.activeElement;
+      modeSheet.querySelector('[data-mode-choice="' + selected + '"]').focus();
     }
     modeBtn.addEventListener('click', openModeSheet);
 
     function resetCard() {
-      card.style.transition = 'transform .30s cubic-bezier(.2,.8,.2,1), opacity .30s ease';
-      card.style.transform = 'none';
-      card.style.opacity = '1';
+      cardMotion.style.transition = 'transform .30s cubic-bezier(.2,.8,.2,1), opacity .30s ease';
+      cardMotion.style.transform = 'none';
+      cardMotion.style.opacity = '1';
     }
 
-    card.addEventListener('pointerdown', function (e) {
-      if (e.target.closest('.audio')) return;
-      drag.on = true; drag.moved = false;
+    cardMotion.addEventListener('pointerdown', function (e) {
+      if (transitioning || e.button !== 0 || e.target.closest('.audio')) return;
+      drag.on = true; drag.axis = '';
       drag.sx = e.clientX; drag.sy = e.clientY; drag.dx = 0;
       drag.t0 = Date.now();
-      card.style.transition = 'none';
-      try { card.setPointerCapture(e.pointerId); } catch (_) {}
     });
 
-    card.addEventListener('pointermove', function (e) {
+    cardMotion.addEventListener('pointermove', function (e) {
       if (!drag.on) return;
       drag.dx = e.clientX - drag.sx;
-      drag.moved = drag.moved || Math.abs(drag.dx) > 7 || Math.abs(e.clientY - drag.sy) > 7;
-      card.style.transform = 'translateX(' + drag.dx + 'px) rotate(' + Math.max(-9, Math.min(9, drag.dx * 0.028)) + 'deg)';
-      card.style.opacity = Math.max(0.4, 1 - Math.abs(drag.dx) / 520).toFixed(3);
+      var dy = e.clientY - drag.sy;
+      if (!drag.axis && (Math.abs(drag.dx) > 10 || Math.abs(dy) > 10)) {
+        drag.axis = Math.abs(drag.dx) > Math.abs(dy) * 1.25 ? 'horizontal' : 'vertical';
+        if (drag.axis === 'horizontal') {
+          stopTasks();
+          cardMotion.classList.add('dragging');
+          cardMotion.style.transition = 'none';
+          try { cardMotion.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+      }
+      if (drag.axis !== 'horizontal') return;
+      cardMotion.style.transform = 'translateX(' + drag.dx + 'px) rotate(' + Math.max(-9, Math.min(9, drag.dx * 0.028)) + 'deg)';
+      cardMotion.style.opacity = Math.max(0.4, 1 - Math.abs(drag.dx) / 520).toFixed(3);
     });
 
-    function release() {
+    function release(cancelled) {
       if (!drag.on) return;
       drag.on = false;
-      if (!drag.moved && Date.now() - drag.t0 < 350) {
+      cardMotion.classList.remove('dragging');
+      if (!cancelled && !drag.axis && Date.now() - drag.t0 < 500) {
         card.classList.toggle('flipped');
+        paint();
         resetCard();
         return;
       }
-      if (drag.dx < -90) move(1, false);
-      else if (drag.dx > 90) move(-1, false);
-      else resetCard();
+      var flick = Date.now() - drag.t0 < 260 && Math.abs(drag.dx) > 48;
+      if (!cancelled && drag.axis === 'horizontal' && (Math.abs(drag.dx) > 90 || flick)) move(drag.dx < 0 ? 1 : -1, false);
+      else {
+        resetCard();
+        if (drag.axis === 'horizontal' && mode !== 0 && !paused && studyScr.classList.contains('on')) later(runAuto, 300);
+      }
       drag.dx = 0;
     }
 
-    card.addEventListener('pointerup', release);
-    window.addEventListener('pointerup', release);
-    window.addEventListener('pointercancel', release);
-    window.addEventListener('blur', release);
-    card.addEventListener('keydown', function (e) {
+    cardMotion.addEventListener('pointerup', function () { release(false); });
+    window.addEventListener('pointerup', function () { release(false); });
+    window.addEventListener('pointercancel', function () { release(true); });
+    window.addEventListener('blur', function () { release(true); });
+    cardFlipper.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowLeft') { e.preventDefault(); move(1, false); }
       if (e.key === 'ArrowRight') { e.preventDefault(); move(-1, false); }
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.classList.toggle('flipped'); }
+      if ((e.key === 'Enter' || e.key === ' ') && !transitioning) { e.preventDefault(); card.classList.toggle('flipped'); paint(); }
     });
-    root.querySelector('[data-previous]').addEventListener('click', function () { move(-1, false); });
-    root.querySelector('[data-next]').addEventListener('click', function () { move(1, false); });
 
     audio.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -882,21 +831,10 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       paint();
     });
     replayBtn.addEventListener('click', function () { paused = false; runAuto(); paint(); });
-    skipBtn.addEventListener('click', function () { move(1, false); });
     speedBtn.addEventListener('click', function () {
       var rates = ['0.8', '1', '1.2', '1.5'];
       settings.speechRate.value = rates[(rates.indexOf(settings.speechRate.value) + 1) % rates.length];
       paint();
-    });
-    completeBtn.addEventListener('click', function () {
-      if (mode !== 1 || phase !== 'listening') return;
-      coverage = Math.min(100, coverage + 25);
-      setStatus('跟读进度 ' + coverage + '%（模拟）');
-      if (coverage === 100) {
-        phase = 'complete';
-        paint();
-        later(showTipAndAdvance, 320);
-      }
     });
 
     var screens = Array.prototype.slice.call(root.querySelectorAll('.scr'));
@@ -909,6 +847,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         if (!wasStudy && mode !== 0 && !paused) runAuto();
       } else {
         stopTasks();
+        transitioning = false;
         resetCard();
         if (name === 'detail') renderCards();
       }
@@ -922,6 +861,12 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
 
     var sheet = root.querySelector('[data-sheet]');
     var deckSheet = root.querySelector('[data-deck-sheet]');
+    var confirmSheet = root.querySelector('[data-confirm-sheet]');
+    var confirmTitle = root.querySelector('[data-confirm-title]');
+    var confirmMessage = root.querySelector('[data-confirm-message]');
+    var confirmOk = root.querySelector('[data-confirm-ok]');
+    var confirmAction = null;
+    var confirmOpener = null;
     var deckForm = {
       title: root.querySelector('[data-deck-title]'),
       description: root.querySelector('[data-deck-description]'),
@@ -931,10 +876,59 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       title: root.querySelector('[data-card-title]'),
       content: root.querySelector('[data-card-content]'),
       speechText: root.querySelector('[data-card-speech]'),
-      memoryTip: root.querySelector('[data-card-tip]'),
-      deleteButton: root.querySelector('[data-card-delete]')
+      memoryTip: root.querySelector('[data-card-tip]')
     };
     var editingDeck = null;
+    var cardOriginal = '';
+    var deckOriginal = '';
+    var sheetOpener = null;
+    function valuesOf(fields) { return JSON.stringify(fields.map(function (field) { return field.value; })); }
+    function cardFields() { return [cardForm.title, cardForm.content, cardForm.speechText, cardForm.memoryTip]; }
+    function deckFields() { return [deckForm.title, deckForm.description]; }
+    function formError(name, message, field) {
+      var error = root.querySelector('[data-' + name + '-error]');
+      error.textContent = message || '';
+      error.hidden = !message;
+      if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+    }
+    function openConfirm(title, message, action, actionLabel, centered) {
+      confirmTitle.textContent = title;
+      confirmMessage.textContent = message;
+      confirmOk.textContent = actionLabel || '确认';
+      confirmAction = action;
+      confirmOpener = document.activeElement;
+      confirmSheet.classList.toggle('centered', Boolean(centered));
+      confirmSheet.classList.add('on');
+      confirmOk.focus();
+    }
+    function closeConfirm() {
+      confirmSheet.classList.remove('on');
+      confirmSheet.classList.remove('centered');
+      confirmAction = null;
+      if (confirmOpener && confirmOpener.isConnected) confirmOpener.focus();
+      confirmOpener = null;
+    }
+    Array.prototype.forEach.call(root.querySelectorAll('[data-confirm-cancel]'), function (el) {
+      el.addEventListener('click', closeConfirm);
+    });
+    confirmOk.addEventListener('click', function () {
+      var action = confirmAction;
+      closeConfirm();
+      if (action) action();
+    });
+    function closeForm(name, saved, discardConfirmed) {
+      var isCard = name === 'card';
+      var fields = isCard ? cardFields() : deckFields();
+      var original = isCard ? cardOriginal : deckOriginal;
+      if (!saved && !discardConfirmed && valuesOf(fields) !== original) {
+        openConfirm('放弃修改？', '当前内容还没有保存，关闭后将无法恢复。', function () { closeForm(name, false, true); }, '放弃');
+        return;
+      }
+      (isCard ? sheet : deckSheet).classList.remove('on');
+      fields.forEach(function (field) { field.removeAttribute('aria-invalid'); });
+      formError(name, '');
+      if (sheetOpener && sheetOpener.isConnected) sheetOpener.focus();
+    }
 
     function renderDecks() {
       deckList.replaceChildren();
@@ -964,57 +958,186 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     }
 
     function renderCards() {
+      revealedRow = null;
       cardList.replaceChildren();
-      root.querySelector('[data-card-count]').textContent = cards.length;
       root.querySelector('[data-card-empty]').hidden = cards.length !== 0;
       modeOpen.textContent = cards.length ? '开始学习' : '添加第一张卡片';
+      root.querySelector('[data-fab]').hidden = cards.length === 0;
       cards.forEach(function (item, position) {
         var row = document.createElement('li');
-        row.className = 'crow';
+        row.className = 'crow card-row';
+        row._card = item;
         var main = document.createElement('button');
         main.className = 'card-row-main';
         main.type = 'button';
         main.textContent = item.title + ' · ' + item.content;
-        main.addEventListener('click', function () { openCardForm(position); });
-        var up = document.createElement('button');
-        up.className = 'reorder';
-        up.type = 'button';
-        up.setAttribute('aria-label', '上移 ' + item.title);
-        up.textContent = '↑';
-        up.disabled = position === 0;
-        up.addEventListener('click', function () {
-          var previous = cards[position - 1];
-          cards[position - 1] = cards[position];
-          cards[position] = previous;
-          if (idx === position) idx -= 1;
-          else if (idx === position - 1) idx += 1;
-          currentDeck.idx = idx;
-          renderCards();
-          paint();
+        main.setAttribute('aria-label', item.title + '；回车编辑，左滑删除，Alt 加上下方向键排序');
+        main.addEventListener('click', function () {
+          if (row._suppressClick) { row._suppressClick = false; return; }
+          if (revealedRow === row) { closeRevealedRow(); return; }
+          openCardForm(cards.indexOf(item));
         });
-        var down = document.createElement('button');
-        down.className = 'reorder';
-        down.type = 'button';
-        down.setAttribute('aria-label', '下移 ' + item.title);
-        down.textContent = '↓';
-        down.disabled = position === cards.length - 1;
-        down.addEventListener('click', function () {
-          var next = cards[position + 1];
-          cards[position + 1] = cards[position];
-          cards[position] = next;
-          if (idx === position) idx += 1;
-          else if (idx === position + 1) idx -= 1;
-          currentDeck.idx = idx;
-          renderCards();
-          paint();
+        main.addEventListener('keydown', function (e) {
+          var delta = e.altKey && e.key === 'ArrowUp' ? -1 : e.altKey && e.key === 'ArrowDown' ? 1 : 0;
+          if (delta) {
+            e.preventDefault();
+            moveCardTo(item, cards.indexOf(item) + delta);
+            var moved = Array.prototype.find.call(cardList.querySelectorAll('.card-row-main'), function (button) { return button._card === item; });
+            if (moved) moved.focus();
+          } else if (e.key === 'Delete') {
+            e.preventDefault();
+            deleteCard(item);
+          }
         });
-        row.append(main, up, down);
+        main._card = item;
+        var deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-action';
+        deleteButton.type = 'button';
+        deleteButton.textContent = '删除';
+        deleteButton.setAttribute('aria-label', '删除 ' + item.title);
+        deleteButton.tabIndex = -1;
+        deleteButton.setAttribute('aria-hidden', 'true');
+        deleteButton.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+        deleteButton.addEventListener('click', function () { deleteCard(item); });
+        row.addEventListener('pointerdown', function (e) {
+          if (e.button !== 0) return;
+          if (revealedRow && revealedRow !== row) closeRevealedRow();
+          var baseX = revealedRow === row ? -76 : 0;
+          rowGesture = { row: row, main: main, item: item, sx: e.clientX, sy: e.clientY, dx: baseX, baseX: baseX, axis: '', pointerId: e.pointerId };
+          try { row.setPointerCapture(e.pointerId); } catch (_) {}
+        });
+        row.append(deleteButton, main);
         cardList.append(row);
       });
       root.querySelector('[data-deck-meta]').textContent = cards.length + ' 张卡片 · ' +
         (cards.length ? '上次学到第 ' + (idx + 1) + ' 张' : '尚未开始');
       renderDecks();
     }
+
+    function closeRevealedRow() {
+      if (!revealedRow) return;
+      revealedRow.classList.remove('revealed');
+      revealedRow.querySelector('.card-row-main').style.transform = '';
+      var action = revealedRow.querySelector('.delete-action');
+      action.tabIndex = -1;
+      action.setAttribute('aria-hidden', 'true');
+      revealedRow = null;
+    }
+
+    function moveCardTo(item, target) {
+      var from = cards.indexOf(item);
+      target = Math.max(0, Math.min(cards.length - 1, target));
+      if (from === target) return;
+      var current = cards[idx];
+      cards.splice(target, 0, cards.splice(from, 1)[0]);
+      idx = cards.indexOf(current);
+      currentDeck.idx = idx;
+      renderCards();
+      paint();
+    }
+
+    function deleteCard(item) {
+      var position = cards.indexOf(item);
+      if (position < 0) return;
+      openConfirm('删除卡片？', '“' + item.title + '”删除后无法恢复。', function () {
+        var currentPosition = cards.indexOf(item);
+        if (currentPosition < 0) return;
+        cards.splice(currentPosition, 1);
+        if (currentPosition < idx) idx -= 1;
+        idx = Math.max(0, Math.min(idx, cards.length - 1));
+        currentDeck.idx = idx;
+        renderCards();
+        if (cards.length) paint();
+      }, '删除', true);
+    }
+
+    function moveSortDrag(e) {
+      if (!rowGesture) return;
+      var dx = e.clientX - rowGesture.sx;
+      var dy = e.clientY - rowGesture.sy;
+      rowGesture.dx = rowGesture.baseX + dx;
+      if (!rowGesture.axis && (Math.abs(dx) > 9 || Math.abs(dy) > 9)) {
+        rowGesture.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'horizontal' : 'vertical';
+        rowGesture.row._suppressClick = true;
+        rowGesture.row.classList.add('gesturing');
+        if (rowGesture.axis === 'vertical') {
+          if (revealedRow === rowGesture.row) closeRevealedRow();
+          var startRect = rowGesture.row.getBoundingClientRect();
+          var ghost = rowGesture.row.cloneNode(true);
+          ghost.className = 'crow card-row sort-ghost';
+          ghost.setAttribute('aria-hidden', 'true');
+          Array.prototype.forEach.call(ghost.querySelectorAll('button'), function (button) { button.tabIndex = -1; });
+          ghost.style.left = startRect.left + 'px';
+          ghost.style.top = startRect.top + 'px';
+          ghost.style.width = startRect.width + 'px';
+          ghost.style.height = startRect.height + 'px';
+          document.body.appendChild(ghost);
+          sortDrag = { row: rowGesture.row, item: rowGesture.item, original: cards.slice(), ghost: ghost, startRect: startRect };
+          sortDrag.row.classList.add('sorting');
+          cardList.classList.add('sorting');
+        }
+      }
+      if (rowGesture.axis === 'horizontal') {
+        rowGesture.main.style.transform = 'translateX(' + Math.max(-88, Math.min(0, rowGesture.dx)) + 'px)';
+        return;
+      }
+      if (rowGesture.axis !== 'vertical' || !sortDrag) return;
+      sortDrag.ghost.style.transform = 'translate3d(0,' + dy + 'px,0) scale(1.02)';
+      var target = document.elementFromPoint(e.clientX, e.clientY);
+      var targetRow = target && target.closest('.crow');
+      if (!targetRow || targetRow === sortDrag.row || !cardList.contains(targetRow)) return;
+      var rect = targetRow.getBoundingClientRect();
+      var previous = Array.prototype.map.call(cardList.children, function (row) { return { row: row, top: row.getBoundingClientRect().top }; });
+      cardList.insertBefore(sortDrag.row, e.clientY < rect.top + rect.height / 2 ? targetRow : targetRow.nextSibling);
+      previous.forEach(function (entry) {
+        if (entry.row === sortDrag.row) return;
+        var offset = entry.top - entry.row.getBoundingClientRect().top;
+        if (!offset) return;
+        entry.row.style.transition = 'none';
+        entry.row.style.transform = 'translateY(' + offset + 'px)';
+        requestAnimationFrame(function () {
+          entry.row.style.transition = 'transform .16s ease';
+          entry.row.style.transform = '';
+        });
+      });
+    }
+
+    function finishSortDrag(cancelled) {
+      if (!rowGesture) return;
+      var gesture = rowGesture;
+      rowGesture = null;
+      if (gesture.axis === 'horizontal') {
+        gesture.row.classList.remove('gesturing');
+        gesture.main.style.transform = '';
+        var reveal = !cancelled && gesture.dx < -38;
+        gesture.row.classList.toggle('revealed', reveal);
+        var action = gesture.row.querySelector('.delete-action');
+        action.tabIndex = reveal ? 0 : -1;
+        action.setAttribute('aria-hidden', reveal ? 'false' : 'true');
+        revealedRow = reveal ? gesture.row : null;
+        setTimeout(function () { gesture.row._suppressClick = false; }, 0);
+        return;
+      }
+      if (!sortDrag) return;
+      var current = cards[idx];
+      var destination = sortDrag.row.getBoundingClientRect();
+      var ghost = sortDrag.ghost;
+      var targetY = cancelled ? 0 : destination.top - sortDrag.startRect.top;
+      ghost.style.transition = 'transform .16s cubic-bezier(.2,.8,.2,1), opacity .16s ease';
+      ghost.style.transform = 'translate3d(0,' + targetY + 'px,0) scale(1)';
+      setTimeout(function () { ghost.remove(); }, 180);
+      if (!cancelled) cards.splice.apply(cards, [0, cards.length].concat(Array.prototype.map.call(cardList.children, function (row) { return row._card; })));
+      else cards.splice.apply(cards, [0, cards.length].concat(sortDrag.original));
+      idx = cards.indexOf(current);
+      currentDeck.idx = idx;
+      sortDrag = null;
+      renderCards();
+      paint();
+    }
+
+    window.addEventListener('pointermove', moveSortDrag);
+    window.addEventListener('pointerup', function () { finishSortDrag(false); });
+    window.addEventListener('pointercancel', function () { finishSortDrag(true); });
 
     function openDeck(deck) {
       currentDeck = deck;
@@ -1030,6 +1153,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
     }
 
     function openCardForm(position) {
+      sheetOpener = document.activeElement;
       editingCard = position;
       var item = position === null ? { title: '', content: '', speechText: '', memoryTip: '' } : cards[position];
       root.querySelector('[data-card-form-title]').textContent = position === null ? '添加卡片' : '编辑卡片';
@@ -1037,51 +1161,47 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       cardForm.content.value = item.content;
       cardForm.speechText.value = item.speechText;
       cardForm.memoryTip.value = item.memoryTip;
-      cardForm.deleteButton.hidden = position === null;
+      cardOriginal = valuesOf(cardFields());
+      formError('card', '');
       sheet.classList.add('on');
+      cardForm.title.focus();
     }
 
     root.querySelector('[data-fab]').addEventListener('click', function () { openCardForm(null); });
     Array.prototype.forEach.call(root.querySelectorAll('[data-close]'), function (el) {
-      el.addEventListener('click', function () { sheet.classList.remove('on'); });
+      el.addEventListener('click', function () { closeForm('card', false); });
     });
     root.querySelector('[data-card-save]').addEventListener('click', function () {
       var title = cardForm.title.value.trim();
       var content = cardForm.content.value.trim();
-      if (!title || !content) { alert('标题和正文不能为空'); return; }
+      if (!title) { formError('card', '请输入标题', cardForm.title); return; }
+      if (!content) { formError('card', '请输入正文', cardForm.content); return; }
       var item = { title: title, content: content, speechText: cardForm.speechText.value.trim(), memoryTip: cardForm.memoryTip.value.trim() };
       if (editingCard === null) cards.push(item); else cards[editingCard] = item;
-      sheet.classList.remove('on');
+      closeForm('card', true);
       renderCards();
       paint();
     });
-    cardForm.deleteButton.addEventListener('click', function () {
-      if (editingCard === null || !confirm('确定删除这张卡片吗？')) return;
-      cards.splice(editingCard, 1);
-      if (editingCard < idx) idx -= 1;
-      idx = Math.max(0, Math.min(idx, cards.length - 1));
-      currentDeck.idx = idx;
-      sheet.classList.remove('on');
-      renderCards();
-      if (cards.length) paint();
-    });
-
     function openDeckForm(deck) {
+      sheetOpener = document.activeElement;
       editingDeck = deck;
       root.querySelector('[data-deck-form-title]').textContent = deck ? '编辑卡组' : '创建卡组';
       deckForm.title.value = deck ? deck.title : '';
       deckForm.description.value = deck ? deck.description : '';
       deckForm.deleteButton.hidden = !deck;
+      deckOriginal = valuesOf(deckFields());
+      formError('deck', '');
       deckSheet.classList.add('on');
+      deckForm.title.focus();
     }
     root.querySelector('[data-deck-create]').addEventListener('click', function () { openDeckForm(null); });
     root.querySelector('[data-deck-edit]').addEventListener('click', function () { openDeckForm(currentDeck); });
     Array.prototype.forEach.call(root.querySelectorAll('[data-deck-close]'), function (el) {
-      el.addEventListener('click', function () { deckSheet.classList.remove('on'); });
+      el.addEventListener('click', function () { closeForm('deck', false); });
     });
     root.querySelector('[data-deck-save]').addEventListener('click', function () {
       var title = deckForm.title.value.trim();
-      if (!title) { alert('卡组名称不能为空'); return; }
+      if (!title) { formError('deck', '请输入卡组名称', deckForm.title); return; }
       if (editingDeck) {
         editingDeck.title = title;
         editingDeck.description = deckForm.description.value.trim();
@@ -1091,31 +1211,45 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
       } else {
         decks.push({ title: title, description: deckForm.description.value.trim(), cards: [], idx: 0 });
       }
-      deckSheet.classList.remove('on');
+      closeForm('deck', true);
       renderDecks();
     });
     deckForm.deleteButton.addEventListener('click', function () {
-      if (!editingDeck || !confirm('确定删除卡组及其中全部卡片吗？')) return;
-      decks.splice(decks.indexOf(editingDeck), 1);
-      deckSheet.classList.remove('on');
-      renderDecks();
-      show('home');
+      if (!editingDeck) return;
+      var targetDeck = editingDeck;
+      openConfirm('删除卡组？', '“' + targetDeck.title + '”及其中全部卡片都会被删除，且无法恢复。', function () {
+        decks.splice(decks.indexOf(targetDeck), 1);
+        closeForm('deck', true);
+        renderDecks();
+        show('home');
+      }, '删除', true);
     });
 
     search.addEventListener('input', renderDecks);
+    cardFields().forEach(function (field) { field.addEventListener('input', function () { field.removeAttribute('aria-invalid'); formError('card', ''); }); });
+    deckFields().forEach(function (field) { field.addEventListener('input', function () { field.removeAttribute('aria-invalid'); formError('deck', ''); }); });
     modeOpen.addEventListener('click', function () {
       if (cards.length) openModeSheet(); else openCardForm(null);
     });
+    function closeModeSheet() {
+      modeSheet.classList.remove('on');
+      if (resumeAfterModeClose) {
+        paused = false;
+        runAuto();
+        paint();
+      }
+      resumeAfterModeClose = false;
+      if (sheetOpener && sheetOpener.isConnected) sheetOpener.focus();
+    }
     Array.prototype.forEach.call(root.querySelectorAll('[data-mode-close]'), function (el) {
-      el.addEventListener('click', function () {
-        modeSheet.classList.remove('on');
-        if (resumeAfterModeClose) {
-          paused = false;
-          runAuto();
-          paint();
-        }
-        resumeAfterModeClose = false;
-      });
+      el.addEventListener('click', closeModeSheet);
+    });
+    root.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (confirmSheet.classList.contains('on')) { e.preventDefault(); closeConfirm(); }
+      else if (sheet.classList.contains('on')) { e.preventDefault(); closeForm('card', false); }
+      else if (deckSheet.classList.contains('on')) { e.preventDefault(); closeForm('deck', false); }
+      else if (modeSheet.classList.contains('on')) { e.preventDefault(); closeModeSheet(); }
     });
     Array.prototype.forEach.call(root.querySelectorAll('[data-mode-choice]'), function (el) {
       el.addEventListener('click', function () {
@@ -1123,6 +1257,7 @@ figcaption{font:400 11px/1 var(--mono);color:var(--muted);letter-spacing:.22em}
         resumeAfterModeClose = false;
         setMode(Number(el.getAttribute('data-mode-choice')), true);
         if (!studyScr.classList.contains('on')) show('study');
+        cardFlipper.focus();
       });
     });
 
