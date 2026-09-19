@@ -17,8 +17,8 @@ import org.junit.Assert.*
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        // Context of the app under test.
+        // Context of the app under test. debug 变体带 .debug 后缀，这里只校验前缀。
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.orange.echocards", appContext.packageName)
+        assertTrue(appContext.packageName.startsWith("com.orange.echocards"))
     }
 }

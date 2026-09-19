@@ -1,5 +1,6 @@
 package com.orange.echocards.ui
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,9 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,26 +43,37 @@ internal val Danger = Color(0xFFB93434)
 internal val FieldBg = Color(0xFFFBFCFC)
 
 @Composable
-internal fun TopBar(title: String? = null, back: (() -> Unit)? = null, trailing: (() -> Unit)? = null) {
+internal fun TopBar(title: String? = null, back: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}) {
     Row(Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (back != null) Text("‹", Modifier.size(48.dp).clickable(onClick = back), fontSize = 36.sp,
-            color = Ink, textAlign = TextAlign.Center)
+        if (back != null) TopBarAction(EchoIcons.Back, "返回", back)
         if (title != null) Text(title, Modifier.padding(start = if (back == null) 12.dp else 0.dp),
             fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Ink)
         Spacer(Modifier.weight(1f))
-        if (trailing != null) Text("✎", Modifier.size(48.dp).clickable(onClick = trailing).padding(top = 10.dp),
-            fontSize = 23.sp, color = Ink, textAlign = TextAlign.Center)
+        actions()
+    }
+}
+
+/** 顶栏图标按钮：48dp 点击区，图标 22dp（与原型 .icn svg 一致，Lucide 自带 2 单位内边距）。 */
+@Composable
+internal fun TopBarAction(@DrawableRes icon: Int, label: String, onClick: () -> Unit) {
+    Box(Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(painterResource(icon), contentDescription = label, tint = Ink, modifier = Modifier.size(22.dp))
     }
 }
 
 @Composable
 internal fun ActionButton(label: String, onClick: () -> Unit, primary: Boolean = true, height: Dp = 48.dp,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, @DrawableRes icon: Int? = null) {
     Box(modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(14.dp))
         .background(if (primary) TealDeep else Surface)
         .border(if (primary) 0.dp else 1.dp, if (primary) TealDeep else Color(0xFFD9DEDE), RoundedCornerShape(14.dp))
         .clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Text(label, color = if (primary) Surface else Ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            if (icon != null) Icon(painterResource(icon), contentDescription = null,
+                tint = if (primary) Surface else Ink, modifier = Modifier.size(18.dp))
+            Text(label, color = if (primary) Surface else Ink, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+        }
     }
 }
 
@@ -67,16 +81,18 @@ internal fun ActionButton(label: String, onClick: () -> Unit, primary: Boolean =
 internal fun BottomTabs(home: Boolean, onHome: () -> Unit, onMine: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(80.dp).background(Surface).border(0.5.dp, Border)
         .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Tab("⌂", "首页", home, Modifier.weight(1f), onHome)
-        Tab("♙", "我的", !home, Modifier.weight(1f), onMine)
+        Tab(EchoIcons.Home, "首页", home, Modifier.weight(1f), onHome)
+        Tab(EchoIcons.Mine, "我的", !home, Modifier.weight(1f), onMine)
     }
 }
 
 @Composable
-private fun Tab(icon: String, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun Tab(@DrawableRes icon: Int, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Column(modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center) {
-        Text(icon, fontSize = 23.sp, color = if (selected) TealDeep else Muted, lineHeight = 23.sp)
+        Icon(painterResource(icon), contentDescription = label, tint = if (selected) TealDeep else Muted,
+            modifier = Modifier.size(22.dp))
+        Spacer(Modifier.height(4.dp))
         Text(label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             color = if (selected) TealDeep else Muted)
     }

@@ -100,6 +100,18 @@ class EchoRepository(context: Context) {
         dao.saveProgress(DeckProgressEntity(deckId, cardId, mode, now()))
     }
 
+    /** 学习页一次性读取卡片顺序。 */
+    suspend fun loadCards(deckId: String): List<CardEntity> = withContext(Dispatchers.IO) { dao.getCards(deckId) }
+
+    /**
+     * 保存学习位置并返回是否成功。失败时 Learning Engine 必须保留当前卡片，
+     * 不能呈现已经切换成功的假象（见 docs/development/05-manual-learning.md 的 M05）。
+     */
+    suspend fun saveLearningPosition(deckId: String, cardId: String, mode: String): Boolean =
+        withContext(Dispatchers.IO) {
+            runCatching { dao.saveProgress(DeckProgressEntity(deckId, cardId, mode, now())) }.isSuccess
+        }
+
     suspend fun saveSettings(mode: String, rate: Double, delay: Long) = withContext(Dispatchers.IO) {
         dao.saveSettings(UserSettingsEntity(defaultMode = mode, speechRate = rate, autoAdvanceDelayMs = delay, updatedAt = now()))
     }

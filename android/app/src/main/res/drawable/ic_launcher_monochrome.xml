@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  知声卡启动图标前景：一张微微倾斜的白色卡片 + 三道声波。
-  构图与 tools/icon/IconGenerator.java 保持一致；内容全部落在中心 66dp 安全区内。
+  知声卡启动图标单色层（Android 13+ 主题图标）。
+  主题图标只取 alpha 通道，因此这里只保留卡片与声波的实心轮廓，去掉卡片内的文字线。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 卡片：28x38，圆角 5，绕中心 (45,54) 逆时针 8 度 -->
     <group
         android:pivotX="45"
         android:pivotY="54"
@@ -16,18 +15,7 @@
         <path
             android:fillColor="#FFFFFFFF"
             android:pathData="M36,35H54A5,5 0 0 1 59,40V68A5,5 0 0 1 54,73H36A5,5 0 0 1 31,68V40A5,5 0 0 1 36,35Z" />
-        <path
-            android:pathData="M38.5,47.5H51.5"
-            android:strokeColor="#FF0F7F7C"
-            android:strokeLineCap="round"
-            android:strokeWidth="3.4" />
-        <path
-            android:pathData="M38.5,60.5H47.5"
-            android:strokeColor="#FF0F7F7C"
-            android:strokeLineCap="round"
-            android:strokeWidth="3.4" />
     </group>
-    <!-- 声波：以卡片右缘 (58.5,54) 为圆心，左右各 50 度 -->
     <path
         android:pathData="M63.64,47.87A8,8 0 0 1 63.64,60.13"
         android:strokeColor="#FFFFFFFF"
