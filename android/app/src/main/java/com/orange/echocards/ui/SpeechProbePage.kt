@@ -111,10 +111,38 @@ internal fun SpeechProbePage(onBack: () -> Unit, vm: SpeechProbeViewModel = view
                 ActionButton("请求麦克风权限", vm::requestMicrophonePermission, primary = false, height = 44.dp)
             }
 
+            Spacer(Modifier.height(16.dp))
+            Text("SenseVoice 云端识别", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ActionButton("开始云端识别", vm::startSenseVoiceRecognition, height = 44.dp, modifier = Modifier.weight(1f),
+                    icon = EchoIcons.Mic)
+                ActionButton("结束", vm::stopSenseVoiceRecognition, primary = false, height = 44.dp, modifier = Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(10.dp))
+            ActionButton("取消云端识别", vm::cancelSenseVoiceRecognition, primary = false, height = 44.dp,
+                icon = EchoIcons.Close)
+
+            Spacer(Modifier.height(16.dp))
+            Text("Vosk 离线识别", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ActionButton("开始离线识别", vm::startVoskRecognition, height = 44.dp, modifier = Modifier.weight(1f),
+                    icon = EchoIcons.Mic)
+                ActionButton("结束", vm::stopVoskRecognition, primary = false, height = 44.dp, modifier = Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(10.dp))
+            ActionButton("取消离线识别", vm::cancelVoskRecognition, primary = false, height = 44.dp,
+                icon = EchoIcons.Close)
+
             Spacer(Modifier.height(18.dp))
             ProbeRow("朗读状态", state.synthesis)
             ProbeRow("识别状态", state.recognition)
             if (state.transcript.isNotEmpty()) ProbeRow("识别文字（不落库）", state.transcript)
+            ProbeRow("云端识别状态", state.senseVoiceRecognition)
+            if (state.senseVoiceTranscript.isNotEmpty()) ProbeRow("云端识别文字（不落库）", state.senseVoiceTranscript)
+            ProbeRow("离线识别状态", state.voskRecognition)
+            if (state.voskTranscript.isNotEmpty()) ProbeRow("离线识别文字（不落库）", state.voskTranscript)
             ProbeRow("被忽略的迟到回调", state.ignoredEvents.toString())
 
             Spacer(Modifier.height(18.dp))

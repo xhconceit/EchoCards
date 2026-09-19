@@ -3,6 +3,7 @@ package com.orange.echocards.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.orange.echocards.BuildConfig
 import com.orange.echocards.domain.speech.MicrophonePermission
 import com.orange.echocards.domain.speech.RecognitionRequest
 import com.orange.echocards.domain.speech.SpeakRequest
@@ -10,6 +11,9 @@ import com.orange.echocards.domain.speech.SpeechCapabilities
 import com.orange.echocards.domain.speech.SpeechPlayerEvent
 import com.orange.echocards.domain.speech.SpeechRecognizerEvent
 import com.orange.echocards.speech.android.AndroidSpeechServices
+import com.orange.echocards.speech.cloud.OkHttpSenseVoiceClient
+import com.orange.echocards.speech.cloud.SenseVoiceSpeechRecognizer
+import com.orange.echocards.speech.vosk.VoskSpeechRecognizer
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -38,6 +42,8 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
     private val player = services.player
     private val recognizer = services.recognizer
     private val capabilityService = services.capabilities
+    private val senseVoice = SenseVoiceSpeechRecognizer(OkHttpSenseVoiceClient(BuildConfig.SENSEVOICE_API_KEY))
+    private val vosk = VoskSpeechRecognizer(application)
 
     data class ProbeState(
         val capabilities: SpeechCapabilities? = null,
@@ -46,6 +52,10 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
         val transcript: String = "",
         val permission: MicrophonePermission = MicrophonePermission.UNDETERMINED,
         val ignoredEvents: Int = 0,
+        val senseVoiceRecognition: String = "未开始",
+        val senseVoiceTranscript: String = "",
+        val voskRecognition: String = "未开始",
+        val voskTranscript: String = "",
         val selfCheck: String = "",
         val mediaVolume: Int = -1,
         val mediaVolumeMax: Int = -1,
@@ -64,13 +74,19 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
     private var asrCounter = 0
     private var currentTtsOperation: String? = null
     private var currentAsrOperation: String? = null
+    private var currentSenseVoiceOperation: String? = null
+    private var currentVoskOperation: String? = null
     private var ttsOutcome: CompletableDeferred<Boolean>? = null
     private var asrOutcome: CompletableDeferred<String?>? = null
+    private var senseVoiceCounter = 0
+    private var voskCounter = 0
     private val clock = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
 
     init {
         viewModelScope.launch { player.events.collect(::onPlayerEvent) }
         viewModelScope.launch { recognizer.events.collect(::onRecognizerEvent) }
+        viewModelScope.launch { senseVoice.events.collect(::onSenseVoiceEvent) }
+        viewModelScope.launch { vosk.events.collect(::onVoskEvent) }
         refreshCapabilities()
     }
 
@@ -172,6 +188,52 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch { recognizer.cancel(operationId) }
     }
 
+    /** SenseVoice 云端识别：录音 → 静音检测 → 上传转写。 */
+    fun startSenseVoiceRecognition() {
+        val operationId = "cloud-asr-${++senseVoiceCounter}"
+        currentSenseVoiceOperation = operationId
+        _state.update { it.copy(senseVoiceRecognition = "录音中…", senseVoiceTranscript = "") }
+        log("senseVoice listen $operationId")
+        viewModelScope.launch {
+            senseVoice.start(RecognitionRequest(operationId, LANGUAGE, partialResults = false, preferOnDevice = false))
+        }
+    }
+
+    fun stopSenseVoiceRecognition() {
+        val operationId = currentSenseVoiceOperation ?: return
+        log("senseVoice stop $operationId")
+        viewModelScope.launch { senseVoice.stop(operationId) }
+    }
+
+    fun cancelSenseVoiceRecognition() {
+        val operationId = currentSenseVoiceOperation ?: return
+        log("senseVoice cancel $operationId")
+        viewModelScope.launch { senseVoice.cancel(operationId) }
+    }
+
+    /** Vosk 离线识别：实时部分结果 + 端点后最终结果，不联网。 */
+    fun startVoskRecognition() {
+        val operationId = "vosk-asr-${++voskCounter}"
+        currentVoskOperation = operationId
+        _state.update { it.copy(voskRecognition = "启动中…", voskTranscript = "") }
+        log("vosk listen $operationId")
+        viewModelScope.launch {
+            vosk.start(RecognitionRequest(operationId, LANGUAGE, partialResults = true, preferOnDevice = true))
+        }
+    }
+
+    fun stopVoskRecognition() {
+        val operationId = currentVoskOperation ?: return
+        log("vosk stop $operationId")
+        viewModelScope.launch { vosk.stop(operationId) }
+    }
+
+    fun cancelVoskRecognition() {
+        val operationId = currentVoskOperation ?: return
+        log("vosk cancel $operationId")
+        viewModelScope.launch { vosk.cancel(operationId) }
+    }
+
     fun requestMicrophonePermission() {
         viewModelScope.launch {
             val result = capabilityService.requestMicrophonePermission()
@@ -265,6 +327,68 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
         refreshIgnored()
     }
 
+    private fun onSenseVoiceEvent(event: SpeechRecognizerEvent) {
+        when (event) {
+            is SpeechRecognizerEvent.Ready -> {
+                _state.update { it.copy(senseVoiceRecognition = "已就绪，等待说话") }
+                log("→ sv ready     ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.SpeechStarted -> {
+                _state.update { it.copy(senseVoiceRecognition = "收音中") }
+                log("→ sv speechStarted ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.SpeechEnded -> {
+                _state.update { it.copy(senseVoiceRecognition = "上传转写中…") }
+                log("→ sv speechEnded ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.FinalResult -> {
+                _state.update { it.copy(senseVoiceRecognition = "已完成（最终结果）", senseVoiceTranscript = event.transcript) }
+                log("→ sv final     ${event.operationId} ${preview(event.transcript)}")
+            }
+            is SpeechRecognizerEvent.Stopped -> {
+                _state.update { it.copy(senseVoiceRecognition = "已取消") }
+                log("→ sv stopped   ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.Error -> {
+                _state.update { it.copy(senseVoiceRecognition = "失败：${event.error.message}") }
+                log("→ sv error     ${event.operationId} ${event.error.code}")
+            }
+            is SpeechRecognizerEvent.PartialResult -> Unit
+        }
+        refreshIgnored()
+    }
+
+    private fun onVoskEvent(event: SpeechRecognizerEvent) {
+        when (event) {
+            is SpeechRecognizerEvent.Ready -> {
+                _state.update { it.copy(voskRecognition = "已就绪，等待说话") }
+                log("→ vk ready     ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.SpeechStarted -> {
+                _state.update { it.copy(voskRecognition = "收音中") }
+                log("→ vk speechStarted ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.PartialResult -> {
+                _state.update { it.copy(voskRecognition = "部分结果", voskTranscript = event.transcript) }
+                log("→ vk partial   ${event.operationId} ${preview(event.transcript)}")
+            }
+            is SpeechRecognizerEvent.FinalResult -> {
+                _state.update { it.copy(voskRecognition = "已完成（最终结果）", voskTranscript = event.transcript) }
+                log("→ vk final     ${event.operationId} ${preview(event.transcript)}")
+            }
+            is SpeechRecognizerEvent.Stopped -> {
+                _state.update { it.copy(voskRecognition = "已取消") }
+                log("→ vk stopped   ${event.operationId}")
+            }
+            is SpeechRecognizerEvent.Error -> {
+                _state.update { it.copy(voskRecognition = "失败：${event.error.message}") }
+                log("→ vk error     ${event.operationId} ${event.error.code}")
+            }
+            is SpeechRecognizerEvent.SpeechEnded -> Unit
+        }
+        refreshIgnored()
+    }
+
     /** 日志只留片段，避免把完整跟读内容写进任何地方。 */
     private fun preview(transcript: String): String =
         if (transcript.length <= 8) transcript else transcript.take(8) + "…(" + transcript.length + ")"
@@ -276,7 +400,9 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
     private fun ignoredCount(): Int {
         val playerIgnored = (player as? com.orange.echocards.speech.android.AndroidSpeechPlayer)?.ignoredEvents ?: 0
         val recognizerIgnored = (recognizer as? com.orange.echocards.speech.android.AndroidSpeechRecognizer)?.ignoredEvents ?: 0
-        return playerIgnored + recognizerIgnored
+        val senseVoiceIgnored = senseVoice.ignoredEvents
+        val voskIgnored = vosk.ignoredEvents
+        return playerIgnored + recognizerIgnored + senseVoiceIgnored + voskIgnored
     }
 
     private fun log(line: String) {
@@ -286,6 +412,8 @@ class SpeechProbeViewModel(application: Application) : AndroidViewModel(applicat
 
     override fun onCleared() {
         viewModelScope.launch {
+            vosk.dispose()
+            senseVoice.dispose()
             recognizer.dispose()
             player.dispose()
             services.audioFocus.deactivate()

@@ -5,6 +5,9 @@
     <!-- 只在进入自动跟读后请求；第一版不保存录音 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- SenseVoice 云端识别需要联网上传音频 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Android 11+ 包可见性：不声明就看不到系统 TTS 与语音识别服务 -->
     <queries>
         <intent>
