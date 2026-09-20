@@ -3,6 +3,7 @@ package com.orange.echocards.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -52,8 +53,17 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -415,7 +425,24 @@ internal fun StudyPage(
                                 }
                             },
                         )
-                    }.clickable { if (!isDragging) onFlip() }, contentAlignment = Alignment.Center) {
+                    }.clickable { if (!isDragging) onFlip() }
+                    .focusable()
+                    .testTag(STUDY_CARD_TAG)
+                    // 屏幕阅读器在卡片上提供切卡操作，键盘用左右方向键，见 screens.md 第 12 节
+                    .semantics {
+                        customActions = listOf(
+                            CustomAccessibilityAction("上一张") { switchCard(-1, 0f); true },
+                            CustomAccessibilityAction("下一张") { switchCard(1, 0f); true },
+                        )
+                    }
+                    .onPreviewKeyEvent { event ->
+                        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                        when (event.key) {
+                            Key.DirectionRight -> { switchCard(1, 0f); true }
+                            Key.DirectionLeft -> { switchCard(-1, 0f); true }
+                            else -> false
+                        }
+                    }, contentAlignment = Alignment.Center) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp).padding(bottom = if (showingBack) 0.dp else 54.dp)
                         .graphicsLayer { if (showingBack) rotationY = 180f },
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -476,3 +503,6 @@ internal fun StudyPage(
         }
     }
 }
+
+/** 学习页卡片的测试标签：设备测试用它定位可聚焦的卡片节点，验证无障碍切卡。 */
+internal const val STUDY_CARD_TAG = "study-card"
