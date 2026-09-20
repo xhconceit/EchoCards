@@ -53,7 +53,9 @@ app/src/main/java/.../
     └── SpeechErrorMapper.kt
 ```
 
-第一版由 Kotlin 适配器直接调用 Android 系统语音服务。
+第一版由 Kotlin 适配器直接调用 Android 系统语音服务：朗读用 `TextToSpeech`，
+跟读识别用 Vosk 端侧离线模型（见 [ADR-002](../decisions/002-offline-vosk-recognition.md)）。
+两者在领域层是同一组接口，Engine 不感知具体实现。
 
 ## 4. 设备能力
 

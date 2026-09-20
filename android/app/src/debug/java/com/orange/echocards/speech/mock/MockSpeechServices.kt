@@ -142,10 +142,34 @@ class MockSpeechRecognizer(
     var partials: List<String> = listOf("惯性", "惯性是物体")
     var finalTranscript: String = "惯性是物体保持原有运动状态的性质"
 
+    /** 逐条部分结果之间的间隔，用来控制"连续两次达标"的时间条件。 */
+    var partialIntervalMs: Long = stepDelayMs
+
+    /** 模拟引擎重复回调：最终结果发两次。 */
+    var duplicateFinal = false
+
+    /** 会话结束但没有听到任何内容（平台用空结果表达）。 */
+    var blankFinal = false
+
+    /** 只发 SpeechEnded，不发最终结果：验证静音确认路径。 */
+    var endWithoutFinal = false
+
+    /** 部分结果之后直接报错（识别服务抖动）。 */
+    var failAfterPartial: SpeechError? = null
+
+    /** 记录收到的识别请求，便于断言顺序与 partialResults 开关。 */
+    val requests = mutableListOf<RecognitionRequest>()
+    var startCount = 0
+        private set
+    var cancelCount = 0
+        private set
+
     private var session: Job? = null
 
     /** 与真实识别器一致：start() 只发起会话，事件异步回调。 */
     override suspend fun start(request: RecognitionRequest) {
+        requests += request
+        startCount += 1
         gate.begin(request.operationId)
         session?.cancel()
         session = scope.launch { runScenario(request) }
@@ -193,13 +217,24 @@ class MockSpeechRecognizer(
             }
             else -> {
                 partials.forEach { partial ->
-                    delay(stepDelayMs)
+                    delay(partialIntervalMs)
                     _events.emit(SpeechRecognizerEvent.PartialResult(request.operationId, partial))
                 }
-                delay(stepDelayMs)
+                failAfterPartial?.let { error ->
+                    if (gate.acceptTerminal(request.operationId)) {
+                        _events.emit(SpeechRecognizerEvent.Error(request.operationId, error))
+                    }
+                    return
+                }
+                delay(partialIntervalMs)
                 _events.emit(SpeechRecognizerEvent.SpeechEnded(request.operationId))
+                if (endWithoutFinal) return
                 if (gate.acceptTerminal(request.operationId)) {
-                    _events.emit(SpeechRecognizerEvent.FinalResult(request.operationId, finalTranscript))
+                    _events.emit(SpeechRecognizerEvent.FinalResult(request.operationId, if (blankFinal) "" else finalTranscript))
+                    if (duplicateFinal) {
+                        // 平台不守规矩：同一次操作再报一次最终结果
+                        _events.emit(SpeechRecognizerEvent.FinalResult(request.operationId, finalTranscript))
+                    }
                 }
             }
         }
@@ -215,6 +250,7 @@ class MockSpeechRecognizer(
     override suspend fun cancel(operationId: String?) {
         val current = gate.activeOperationId ?: return
         if (operationId != null && operationId != current) return
+        cancelCount += 1
         session?.cancel()
         if (gate.acceptTerminal(current)) _events.emit(SpeechRecognizerEvent.Stopped(current))
         if (scenario == MockScenario.LateResultAfterCancel) {

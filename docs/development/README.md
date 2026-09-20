@@ -1,6 +1,6 @@
 # Android 开发节点与测试
 
-状态：执行清单；数据、卡片管理与 JSON 导入开发中  
+状态：执行清单；数据、卡片管理、JSON 导入、学习流程与跟读匹配开发中  
 实现方式见[Android 第一版开发方案](../implementation-plan.md)。
 
 ## 开发节点与状态
@@ -16,7 +16,7 @@
 | [3. 卡组和卡片管理](03-deck-card-management.md) | 进行中 | 开发清单完成，C01–C05 通过 |
 | [4. JSON 导入与去重](04-json-import.md) | 进行中 | 开发清单完成，I01–I07 通过 |
 | [5. 手动学习](05-manual-learning.md) | 进行中 | 开发清单完成，M01–M05 通过 |
-| [6. 自动播放与自动跟读](06-automatic-learning.md) | 未开始 | 开发清单完成，A01–A07 通过 |
+| [6. 自动播放与自动跟读](06-automatic-learning.md) | 进行中 | 开发清单完成，A01–A07 通过 |
 | [7. 集成验收](07-integration.md) | 未开始 | 开发清单完成，R01–R05 通过 |
 
 ## 测试执行方式

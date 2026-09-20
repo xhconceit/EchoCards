@@ -30,9 +30,9 @@
 - 单 Activity + Navigation Compose
 - ViewModel + StateFlow + Kotlin Coroutines
 - Room（SQLite）本地存储
-- Android TextToSpeech 和 SpeechRecognizer
+- Android TextToSpeech 负责朗读；跟读识别用 Vosk 端侧离线模型（见 [ADR-002](docs/decisions/002-offline-vosk-recognition.md)）
 
-上述为目标架构；当前工程仅接入基础 Compose 和 AndroidX 依赖，其余随功能开发引入。依赖版本以 [Version Catalog](android/gradle/libs.versions.toml) 为准。
+上述为目标架构；当前工程已接入 Compose、Room、Navigation 与语音适配器。依赖版本以 [Version Catalog](android/gradle/libs.versions.toml) 为准。`assets/model-cn/` 是随包分发的离线识别模型（约 62 MB）。
 
 ## 本地开发
 
@@ -56,6 +56,6 @@ cd android
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-也可以在 Android Studio 选择 `app` 和目标设备后运行。当前测试仍是工程模板示例，尚未覆盖业务功能。
+也可以在 Android Studio 选择 `app` 和目标设备后运行。JVM 单元测试覆盖解析、匹配与学习引擎规则；设备测试覆盖数据库事务与学习页语音流程，需要在目标真机执行。
 
 完整页面开发前，先验证固定卡片的朗读、跟读识别和完成判断流程。语音服务、语言包和离线能力依设备而异，必须覆盖目标 Android 真机。

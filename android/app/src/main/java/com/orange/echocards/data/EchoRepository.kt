@@ -3,6 +3,8 @@ package com.orange.echocards.data
 import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import androidx.room.withTransaction
+import com.orange.echocards.domain.learning.LearningAttemptRecord
+import com.orange.echocards.domain.learning.LearningMode
 import com.orange.echocards.importdata.ImportedCard
 import com.orange.echocards.importdata.ImportedDeck
 import com.orange.echocards.importdata.JsonDeckImport
@@ -112,6 +114,40 @@ class EchoRepository(context: Context) {
             runCatching { dao.saveProgress(DeckProgressEntity(deckId, cardId, mode, now())) }.isSuccess
         }
 
+    /**
+     * 一次学习推进：学习记录（可为空）与下一张位置在同一个事务里写入，
+     * 见 docs/reference/data-model.md 第 8 节。任一步失败整体回滚，返回 false。
+     */
+    suspend fun saveLearningTransaction(
+        deckId: String,
+        nextCardId: String,
+        mode: LearningMode,
+        attempt: LearningAttemptRecord?,
+    ): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            database.withTransaction {
+                attempt?.let {
+                    dao.insertAttempt(
+                        CardAttemptEntity(
+                            id = UUID.randomUUID().toString(),
+                            deckId = deckId,
+                            cardId = it.cardId,
+                            cardRevision = it.cardRevision,
+                            mode = mode.storageName,
+                            outcome = it.outcome.storageName,
+                            coverage = it.coverage,
+                            endingMatched = it.endingMatched,
+                            algorithmVersion = it.algorithmVersion,
+                            startedAt = iso(it.startedAtMs),
+                            endedAt = iso(it.endedAtMs),
+                        )
+                    )
+                }
+                dao.saveProgress(DeckProgressEntity(deckId, nextCardId, mode.storageName, now()))
+            }
+        }.isSuccess
+    }
+
     suspend fun saveSettings(mode: String, rate: Double, delay: Long) = withContext(Dispatchers.IO) {
         dao.saveSettings(UserSettingsEntity(defaultMode = mode, speechRate = rate, autoAdvanceDelayMs = delay, updatedAt = now()))
     }
@@ -154,7 +190,11 @@ class EchoRepository(context: Context) {
 
     private fun String.requireNotEmpty(message: String): String = also { require(it.isNotEmpty()) { message } }
 
-    private fun now(): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }.format(Date())
+    private fun now(): String = iso(System.currentTimeMillis())
+
+    /** 数据库里的时间统一为 UTC ISO-8601 字符串，见 data-model.md 第 3 节。 */
+    private fun iso(epochMillis: Long): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }.format(Date(epochMillis))
 }

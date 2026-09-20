@@ -283,7 +283,6 @@ private fun CardListRow(card: CardEntity, onEdit: (CardEntity) -> Unit,
 @Composable
 internal fun StudyPage(
     state: LearningEngineState,
-    choosingMode: Boolean,
     onMode: () -> Unit,
     onBack: () -> Unit,
     onNext: () -> Unit,
@@ -293,6 +292,10 @@ internal fun StudyPage(
     onPause: () -> Unit,
     onResume: () -> Unit,
     onReplay: () -> Unit,
+    onRetry: () -> Unit,
+    onManual: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onSpeed: () -> Unit,
     onEnterBackground: () -> Unit,
     onReturnForeground: () -> Unit,
 ) {
@@ -435,24 +438,41 @@ internal fun StudyPage(
                 }
             }
         }
+        // 界面只给状态文案：覆盖率与识别文本都不展示（speech-matching.md 第 16 节）
         val status = when {
             state.error != null -> state.error.message
             state.mode == LearningMode.MANUAL -> ""
-            paused -> "已暂停"
+            paused -> "学习已暂停"
             state.phase == LearningPhase.SHOWING_MEMORY_TIP -> "快速记忆点"
-            speaking -> "正在朗读"
-            state.phase == LearningPhase.LISTENING -> "轮到你读了"
-            state.phase == LearningPhase.EVALUATING -> "判断中…"
+            speaking -> "正在朗读，请先听一遍"
+            state.phase == LearningPhase.LISTENING || state.phase == LearningPhase.EVALUATING -> "轮到你读了"
             else -> ""
         }
-        if (status.isNotEmpty()) Text(status, Modifier.fillMaxWidth().padding(bottom = 24.dp),
+        if (status.isNotEmpty()) Text(status, Modifier.fillMaxWidth().padding(bottom = if (state.error != null) 12.dp else 24.dp),
             color = if (state.error != null) Danger else Muted, fontSize = 13.sp, textAlign = TextAlign.Center)
+        val error = state.error
+        // 暂停时不显示操作行：暂停状态下的重试语义不明确，先让用户决定继续还是退出
+        if (error != null && !paused) {
+            // 权限、语音服务和保存失败都要有明确的恢复入口（learning-engine.md 第 11 节）
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (error.recoverable) ActionButton("重试", onRetry, true, 44.dp, Modifier.weight(1f))
+                if (error.code == "PERMISSION_DENIED") {
+                    ActionButton("系统设置", onOpenSettings, false, 44.dp, Modifier.weight(1f))
+                }
+                if (state.mode != LearningMode.MANUAL) {
+                    ActionButton("切换手动学习", onManual, false, 44.dp, Modifier.weight(1f))
+                }
+            }
+        }
         if (state.mode != LearningMode.MANUAL) Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 34.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ActionButton(if (paused) "继续" else "暂停", { if (paused) onResume() else onPause() }, false, 44.dp,
                 Modifier.weight(1f))
-            ActionButton("重读", onReplay, false, 44.dp, Modifier.weight(1f))
-            if (state.mode == LearningMode.AUTO_PLAY) ActionButton("速度 1.0×", {}, false, 44.dp, Modifier.weight(1f))
+            if (state.phase != LearningPhase.SHOWING_MEMORY_TIP) {
+                ActionButton("重读", onReplay, false, 44.dp, Modifier.weight(1f))
+            }
+            ActionButton("速度 ${state.speechRate}×", onSpeed, false, 44.dp, Modifier.weight(1f))
         }
     }
 }

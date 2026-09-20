@@ -1,9 +1,11 @@
 package com.orange.echocards.speech.vosk
 
+import android.Manifest
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import androidx.annotation.RequiresPermission
 import com.orange.echocards.domain.speech.OperationGate
 import com.orange.echocards.domain.speech.RecognitionRequest
 import com.orange.echocards.domain.speech.SpeechError
@@ -132,7 +134,11 @@ internal class VoskSpeechRecognizer(context: Context) : SpeechRecognizer {
                     if (gate.accept(operationId)) _events.tryEmit(SpeechRecognizerEvent.PartialResult(operationId, partial))
                 }
                 val now = System.currentTimeMillis() - startedAt
-                if (endOfSpeech || finishRequested.get() || now >= MAX_RECORD_MS) break@loop
+                if (endOfSpeech || finishRequested.get() || now >= MAX_RECORD_MS) {
+                    // 与系统识别器一致：用户停下来时先发 SpeechEnded，上层用它启动静音确认
+                    if (gate.accept(operationId)) _events.tryEmit(SpeechRecognizerEvent.SpeechEnded(operationId))
+                    break@loop
+                }
             }
             if (cancelRequested.get()) return
 
@@ -156,6 +162,8 @@ internal class VoskSpeechRecognizer(context: Context) : SpeechRecognizer {
         }
     }
 
+    /** 调用方必须在 try/catch 里处理 SecurityException，见下面的录制流程。 */
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun createRecorder(): AudioRecord {
         val minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (minBuffer <= 0) throw IllegalStateException("设备不支持 16kHz mono PCM 录音")

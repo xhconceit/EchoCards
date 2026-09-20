@@ -1,13 +1,16 @@
 package com.orange.echocards
 
+import com.orange.echocards.domain.learning.AttemptOutcome
 import com.orange.echocards.domain.learning.CardFace
 import com.orange.echocards.domain.learning.DefaultLearningEngine
+import com.orange.echocards.domain.learning.LearningAttemptRecord
 import com.orange.echocards.domain.learning.LearningCard
 import com.orange.echocards.domain.learning.LearningCardSource
 import com.orange.echocards.domain.learning.LearningMode
 import com.orange.echocards.domain.learning.LearningPhase
 import com.orange.echocards.domain.learning.LearningProgressSink
 import com.orange.echocards.domain.learning.SpeechSegmenter
+import com.orange.echocards.speech.mock.MockAudioFocusController
 import com.orange.echocards.speech.mock.MockSpeechPlayer
 import com.orange.echocards.speech.mock.MockSpeechRecognizer
 import kotlinx.coroutines.delay
@@ -36,11 +39,18 @@ class LearningEngineTest {
      */
     private fun learningTest(
         speakDurationMs: Long = 10,
-        sink: LearningProgressSink = LearningProgressSink { _, _, _ -> true },
+        sink: LearningProgressSink = LearningProgressSink { _, _, _, _ -> true },
         body: suspend kotlinx.coroutines.CoroutineScope.(DefaultLearningEngine, MockSpeechPlayer) -> Unit,
     ) = runBlocking {
         val player = MockSpeechPlayer(this, speakDurationMs)
-        val engine = DefaultLearningEngine(player, MockSpeechRecognizer(this), this, source(), sink)
+        val engine = DefaultLearningEngine(
+            player = player,
+            recognizer = MockSpeechRecognizer(this),
+            audioFocus = MockAudioFocusController(),
+            scope = this,
+            cardSource = source(),
+            progressSink = sink,
+        )
         try {
             body(engine, player)
         } finally {
@@ -111,9 +121,10 @@ class LearningEngineTest {
         val engine = DefaultLearningEngine(
             player = player,
             recognizer = MockSpeechRecognizer(this),
+            audioFocus = MockAudioFocusController(),
             scope = this,
             cardSource = source(),
-            progressSink = LearningProgressSink { _, cardId, _ ->
+            progressSink = LearningProgressSink { _, cardId, _, _ ->
                 savedCards += cardId
                 false
             },
@@ -132,6 +143,27 @@ class LearningEngineTest {
         }
     }
 
+    /** 手动模式左滑记一条 viewed，倒着看不记录（learning-engine.md 第 4 节）。 */
+    @Test
+    fun manualNextRecordsViewedAndPreviousDoesNot() = runBlocking {
+        val attempts = mutableListOf<LearningAttemptRecord>()
+        learningTest(
+            sink = LearningProgressSink { _, _, _, attempt ->
+                attempt?.let { attempts += it }
+                true
+            },
+        ) { engine, _ ->
+            engine.initialize("deck", "c1", LearningMode.MANUAL, 1.0, 50)
+            engine.next()
+            engine.previous()
+
+            assertEquals("只应有下一次浏览记录", 1, attempts.size)
+            assertEquals(AttemptOutcome.VIEWED, attempts.single().outcome)
+            assertEquals("c1", attempts.single().cardId)
+            assertEquals("手动浏览不写匹配结果", null, attempts.single().coverage)
+        }
+    }
+
     @Test
     fun flipTogglesFaceAndReplayReturnsToFront() = learningTest { engine, _ ->
         engine.initialize("deck", "c2", LearningMode.MANUAL, 1.0, 50)
@@ -142,20 +174,27 @@ class LearningEngineTest {
         assertEquals(CardFace.FRONT, engine.state.value.cardFace)
     }
 
-    /** 自动播放必须等真实完成事件，再翻到快速记忆点，停留后才前进。 */
+    /**
+     * 自动播放必须等真实完成事件，再翻到快速记忆点，停留后才前进。
+     *
+     * 循环里每一张卡片的耗时都受调度抖动影响，所以这里采样整段过程、断言状态模式，
+     * 而不是押注某一个固定的时刻。
+     */
     @Test
-    fun autoPlayShowsMemoryTipThenAdvancesAfterDelay() = learningTest { engine, _ ->
+    fun autoPlayShowsMemoryTipBeforeEveryAdvance() = learningTest { engine, _ ->
         engine.initialize("deck", "c1", LearningMode.AUTO_PLAY, 1.0, 120)
         engine.start()
+        assertEquals("朗读开始前应保持正面", CardFace.FRONT, engine.state.value.cardFace)
 
-        delay(300)
-        assertEquals("应先翻到快速记忆点", CardFace.BACK, engine.state.value.cardFace)
-        assertTrue("停留期间仍在展示记忆点",
-            engine.state.value.phase == LearningPhase.SHOWING_MEMORY_TIP || engine.state.value.currentIndex == 1)
+        val samples = mutableListOf<Pair<Int, CardFace>>()
+        repeat(160) {
+            samples += engine.state.value.currentIndex to engine.state.value.cardFace
+            delay(5)
+        }
 
-        delay(400)
-        // 自动播放会一直循环下去，这里只断言“确实前进过”，不锁定某一刻的翻面状态
-        assertTrue("停留结束后应切到下一张", engine.state.value.currentIndex >= 1)
+        val advances = samples.zipWithNext().filter { (before, after) -> before.first != after.first }
+        assertTrue("自动播放应持续前进", advances.size >= 2)
+        assertTrue("每次前进之前都必须先翻到快速记忆点", advances.all { it.first.second == CardFace.BACK })
     }
 
     @Test
@@ -183,6 +222,83 @@ class LearningEngineTest {
         engine.setMode(LearningMode.AUTO_PLAY)
         assertEquals(CardFace.FRONT, engine.state.value.cardFace)
         assertFalse(engine.state.value.phase == LearningPhase.DISPOSED)
+    }
+
+    /** 自动播放不写学习记录，但每次前进都要写位置（data-model.md 第 8 节）。 */
+    @Test
+    fun autoPlayPersistsPositionWithoutAttemptRecord() = runBlocking {
+        val saved = mutableListOf<Pair<String, LearningAttemptRecord?>>()
+        learningTest(
+            sink = LearningProgressSink { _, nextCardId, _, attempt ->
+                saved += nextCardId to attempt
+                true
+            },
+        ) { engine, _ ->
+            engine.initialize("deck", "c1", LearningMode.AUTO_PLAY, 1.0, 40)
+            engine.start()
+            delay(400)
+
+            assertTrue("自动播放前进时要写位置", saved.isNotEmpty())
+            assertTrue("自动播放不写学习记录", saved.all { it.second == null })
+        }
+    }
+
+    /** 平台重复报完成时不能跳过后面的分段。 */
+    @Test
+    fun duplicateCompletionDoesNotSkipSegments() = runBlocking {
+        val player = MockSpeechPlayer(this, speakDurationMs = 5)
+        player.duplicateCompletion = true
+        val engine = DefaultLearningEngine(
+            player = player,
+            recognizer = MockSpeechRecognizer(this),
+            audioFocus = MockAudioFocusController(),
+            scope = this,
+            cardSource = source(),
+            progressSink = LearningProgressSink { _, _, _, _ -> true },
+        )
+        try {
+            engine.initialize("deck", "c1", LearningMode.MANUAL, 1.0, 50)
+            engine.start()
+            delay(400)
+
+            assertEquals("第一张卡片有两段，必须都读到", SpeechSegmenter.split(cards[0].spokenText),
+                player.requests.map { it.text })
+            assertEquals(LearningPhase.READY, engine.state.value.phase)
+        } finally {
+            engine.dispose()
+        }
+    }
+
+    /** 手动切卡保存失败后重试，仍要补上那次浏览记录。 */
+    @Test
+    fun retryAfterSaveFailureKeepsTheViewedRecord() = runBlocking {
+        val attempts = mutableListOf<LearningAttemptRecord?>()
+        var failing = true
+        val engine = DefaultLearningEngine(
+            player = MockSpeechPlayer(this, speakDurationMs = 5),
+            recognizer = MockSpeechRecognizer(this),
+            audioFocus = MockAudioFocusController(),
+            scope = this,
+            cardSource = source(),
+            progressSink = LearningProgressSink { _, _, _, attempt ->
+                attempts += attempt
+                !failing
+            },
+        )
+        try {
+            engine.initialize("deck", "c1", LearningMode.MANUAL, 1.0, 50)
+            engine.next()
+            assertEquals("保存失败不切卡", 0, engine.state.value.currentIndex)
+
+            failing = false
+            engine.retry()
+
+            assertEquals("重试后切卡成功", 1, engine.state.value.currentIndex)
+            assertEquals(2, attempts.size)
+            assertEquals("补写的是浏览记录", AttemptOutcome.VIEWED, attempts.last()?.outcome)
+        } finally {
+            engine.dispose()
+        }
     }
 
     @Test

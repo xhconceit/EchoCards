@@ -31,6 +31,7 @@ data class LearningEngineState(
     val cardFace: CardFace,
     val operationId: String?,
     val speechSegmentIndex: Int,
+    val speechRate: Double,
     val matchProgress: MatchProgress?,
     val error: LearningError?,
 )
@@ -54,6 +55,7 @@ interface LearningEngine {
     suspend fun flip()
     suspend fun setMode(mode: LearningMode)
     suspend fun setSpeechRate(rate: Double)
+    suspend fun retry()
     suspend fun dispose()
 }
 ```
@@ -117,6 +119,12 @@ stateDiagram-v2
 
 用户主动切卡时取消当前跟读并清除临时匹配进度，不保存跟读完成记录。暂停、重读或模式切换也清除临时匹配进度。
 
+实现上的三点补充：
+
+- **完成锁**：完成流程用一次 CAS 抢锁，重复的完成回调（重复的最终结果、TTS 重复报完成、静音计时与最终结果同时到达）只会跑一次，因此"只保存一条记录、只前进一张"。锁在切卡时释放。
+- **只写一次库**：第 3 步的事务由 `LearningProgressSink` 一次完成（学习记录 + 下一张位置），第 6 步切卡只更新界面与语音，不再写库。写入失败时保留当前卡片、停留在正面并给出可重试错误，`retry()` 补做这次事务。
+- **匹配进度不进界面**：完整识别文本只存在于内存，`matchProgress` 只携带目标文本与覆盖率等数值，界面按 `docs/design/screens.md` 第 9 节只显示状态文案。
+
 ## 8. 自动播放
 
 ```mermaid
@@ -130,7 +138,9 @@ stateDiagram-v2
     paused --> speaking: 继续
 ```
 
-自动播放必须等待真实 TTS 完成事件，不能用固定朗读时长。翻面后无论是否填写快速记忆点都进入 `SHOWING_MEMORY_TIP`。播放速度变化对下一次朗读生效；实现允许在当前卡片重新开始以立即应用。
+自动播放必须等待真实 TTS 完成事件，不能用固定朗读时长。翻面后无论是否填写快速记忆点都进入 `SHOWING_MEMORY_TIP`。播放速度变化对下一次朗读生效。
+
+自动播放不写学习记录，但**要写位置**（data-model.md 第 8 节）：停留结束、切到下一张之前先更新 `deck_progress`，写失败就保留当前卡片并给出可重试错误。跟读模式的同一位置由完成事务一起写入，不再重复写。
 
 ## 9. 翻面与模式切换
 
@@ -141,6 +151,8 @@ stateDiagram-v2
 ## 10. 后台与退出
 
 进入后台或发生音频中断时执行 `pause()`，停止朗读和识别并保存当前位置。返回前台保持暂停，不自动继续。
+
+音频焦点由 `AudioFocusController` 提供：朗读前申请播放焦点，收音前申请录音焦点，退出与暂停时释放。只处理焦点丢失（`InterruptionStarted`）——此时同后台一样进入暂停；`InterruptionEnded` 与 `RouteChanged` 不改变状态，系统即使提示可以恢复也不会自动开麦（换耳机不该打断学习）。
 
 用户关闭学习页面时直接保存当前位置并调用 `dispose()`：
 
@@ -155,10 +167,12 @@ stateDiagram-v2
 ## 11. 错误恢复
 
 - 朗读失败：保留卡片，提供重试或切换模式。
-- 权限拒绝：提供重试、系统设置和手动学习。
+- 权限拒绝：提供重试、系统设置和手动学习；没有权限时不启动自动跟读的朗读，也不会去开麦。
 - 识别不可用：提供重试或手动学习。
 - 保存失败：不切卡，保留当前状态并重试。
-- 识别多次无结果：停止自动重启，提供重读或手动学习。
+- 识别多次无结果：停止自动重启（默认最多 3 次），提供重读或手动学习。
+
+`retry()` 按优先级恢复：先补做失败的事务（完成记录或位置），没有待补事务时清掉错误、按当前模式重开当前卡片。
 
 ## 12. 验收重点
 

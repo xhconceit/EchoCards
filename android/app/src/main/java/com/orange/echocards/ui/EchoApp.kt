@@ -1,6 +1,9 @@
 package com.orange.echocards.ui
 
+import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.orange.echocards.data.CardEntity
 import com.orange.echocards.data.DeckEntity
+import com.orange.echocards.domain.learning.LearningMode
 import kotlinx.coroutines.launch
 
 /**
@@ -60,8 +64,9 @@ private enum class Page(val depth: Int, val tab: Boolean = false) {
 fun EchoApp(vm: EchoViewModel = viewModel()) {
     val deckSummaries by vm.deckSummaries.collectAsState()
     val loadError by vm.loadError.collectAsState()
+    val context = LocalContext.current
     // 语音探针只在 debug 构建里露出
-    val debuggable = (LocalContext.current.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    val debuggable = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     val selectedDeck by vm.selectedDeck.collectAsState()
     val cards by vm.cards.collectAsState()
     val progress by vm.progress.collectAsState()
@@ -148,7 +153,6 @@ fun EchoApp(vm: EchoViewModel = viewModel()) {
                         onDeleteCard = { cardToDelete = it }, onMoveCard = vm::moveCard)
                     Page.STUDY -> StudyPage(
                         state = studyState,
-                        choosingMode = showMode,
                         onMode = { showMode = true },
                         onBack = { studyVm.close(); page = Page.DETAIL },
                         onNext = studyVm::next,
@@ -158,6 +162,17 @@ fun EchoApp(vm: EchoViewModel = viewModel()) {
                         onPause = studyVm::pause,
                         onResume = studyVm::resume,
                         onReplay = studyVm::replay,
+                        onRetry = studyVm::retry,
+                        onManual = {
+                            mode = "manual"
+                            studyVm.setMode(LearningMode.MANUAL)
+                        },
+                        onOpenSettings = {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", context.packageName, null))
+                            context.startActivity(intent)
+                        },
+                        onSpeed = studyVm::cycleSpeechRate,
                         onEnterBackground = studyVm::onEnterBackground,
                         onReturnForeground = studyVm::onReturnForeground,
                     )

@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -18,6 +19,7 @@ import com.orange.echocards.data.EchoDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -104,14 +106,88 @@ class StudySpeechTest {
             rule.onAllNodesWithContentDescription("朗读").fetchSemanticsNodes().isNotEmpty())
     }
 
-    private fun openManualStudy() {
+    /** 自动播放：不需要用户操作就会翻到快速记忆点并前进到下一张。 */
+    @Test
+    fun autoPlayAdvancesWithoutUserInput() = runBlocking {
+        startApp()
+        goHome()
+        openStudy("自动播放")
+
+        val duringPlayback = recordMicPeak(60_000) {
+            rule.waitUntil(30_000) {
+                runCatching {
+                    rule.onAllNodesWithText("快速记忆点").fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
+            // 停留结束后自动切到第二张
+            rule.waitUntil(30_000) {
+                runCatching {
+                    rule.onAllNodesWithText("加速度", substring = true).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
+        }
+
+        val dir = File(context.getExternalFilesDir(null), "shots").apply { mkdirs() }
+        File(dir, "study-autoplay.txt").writeText("duringPlayback=$duringPlayback\n")
+        assertTrue("自动播放期间应真的出声：peak=$duringPlayback", duringPlayback > 800)
+    }
+
+    /**
+     * 自动跟读：朗读结束后才提示用户跟读；退回桌面进入暂停，回到前台保持暂停。
+     *
+     * 页面这一层只能观察到状态文案。"麦克风确实被放开"由 JVM 用例
+     * （`LearningEngineFollowAlongTest.a07_*` 断言 `recognizer.cancel()` 被调用）与
+     * 语音适配器的契约保证；这里额外记录后台期间的麦克风峰值作为佐证，
+     * 因为它同时会被其它应用的声音影响，不作为判定条件。
+     */
+    @Test
+    fun followAlongListensAfterSpeechThenStaysPausedInBackground() = runBlocking {
+        startApp()
+        goHome()
+        openStudy("自动跟读")
+
+        rule.waitUntil(30_000) {
+            runCatching {
+                rule.onAllNodesWithText("轮到你读了").fetchSemanticsNodes().isNotEmpty()
+            }.getOrDefault(false)
+        }
+
+        val backgroundPeak = recordMicPeak(4_000) {
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_HOME)
+            rule.waitUntil(15_000) {
+                runCatching {
+                    rule.onAllNodesWithText("学习已暂停").fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
+        }
+
+        // 回到前台：必须仍然是暂停，不能自动重新开麦跟读
+        startApp()
+        rule.waitForIdle()
+        rule.waitUntil(15_000) {
+            runCatching {
+                rule.onAllNodesWithText("学习已暂停").fetchSemanticsNodes().isNotEmpty()
+            }.getOrDefault(false)
+        }
+        delay(2_000)
+        assertEquals("回到前台应保持暂停",
+            true, rule.onAllNodesWithText("学习已暂停").fetchSemanticsNodes().isNotEmpty())
+        rule.onAllNodesWithText("轮到你读了").assertCountEquals(0)
+
+        val dir = File(context.getExternalFilesDir(null), "shots").apply { mkdirs() }
+        File(dir, "study-background-mic.txt").writeText("backgroundPeak=$backgroundPeak\n")
+    }
+
+    private fun openStudy(modeName: String) {
         rule.onNodeWithText("示例卡组").performClick()
         rule.waitForIdle()
         rule.onNodeWithText("开始学习").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("手动学习").performClick()
+        rule.onNodeWithText(modeName).performClick()
         rule.waitForIdle()
     }
+
+    private fun openManualStudy() = openStudy("手动学习")
 
     private fun seedDeck() {
         val stamp = "2026-09-19T06:00:00Z"

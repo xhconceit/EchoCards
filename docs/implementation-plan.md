@@ -1,11 +1,11 @@
 # Android 第一版开发方案
 
-状态：实施方案；数据、卡片管理与 JSON 导入开发中  
+状态：实施方案；数据、卡片管理、JSON 导入与学习流程开发中  
 范围：Android 原生 App 第一版
 
 ## 1. 当前起点与目标
 
-`android/` 已接入 Compose 页面、Room 数据库和 JSON 导入基础实现。`dome.html` 是视觉与交互基准；Android 仍需完成语音流程、迁移测试、完整交互验收和真机验证。
+`android/` 已接入 Compose 页面、Room 数据库、JSON 导入、三种学习模式与跟读匹配。`dome.html` 是视觉与交互基准；Android 仍需完成真机验证、迁移测试与完整交互验收。
 
 第一版交付本地卡组与卡片管理、JSON 文件导入、三种学习模式、普通话朗读与跟读、本地持久化。产品行为以[第一版需求](product/requirements.md)为准；此文档规定实现方式和模块边界，执行状态与验收用例由[开发节点与测试](development/README.md)维护。
 
@@ -19,13 +19,13 @@ app/src/main/java/com/orange/echocards/
 ├── domain/      领域模型、用例、Learning Engine、跟读匹配、接口
 ├── data/        Room Entity、DAO、数据库、Repository 实现
 ├── importdata/  JSON 读取、解析、校验、规范化、重复判断
-├── speech/      Android TTS、SpeechRecognizer、音频焦点适配
+├── speech/      Android TTS、离线／系统／云端识别适配器、音频焦点适配
 └── di/          依赖装配
 ```
 
 调用方向为 `Compose → ViewModel → 领域用例 → Repository／语音接口`。UI 通过 `StateFlow` 接收状态，通过 ViewModel 发出命令。Composable 不直接访问 Room DAO、`TextToSpeech` 或 `SpeechRecognizer`。领域代码不依赖 Compose、Room Entity 或 Android 系统类型。
 
-依赖版本以 `android/gradle/libs.versions.toml` 和 Gradle Wrapper 为准。实现时补入 Navigation Compose、ViewModel、协程、Room 和所需测试依赖，并锁定版本；系统语音能力直接使用 Android SDK。
+依赖版本以 `android/gradle/libs.versions.toml` 和 Gradle Wrapper 为准。实现时补入 Navigation Compose、ViewModel、协程、Room 和所需测试依赖，并锁定版本；朗读直接使用 Android SDK 的 `TextToSpeech`，跟读识别使用随包的 Vosk 离线模型（见 [ADR-002](decisions/002-offline-vosk-recognition.md)）。
 
 ## 3. 本地数据实现
 
