@@ -154,11 +154,9 @@ class StudySpeechTest {
 
         val backgroundPeak = recordMicPeak(4_000) {
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_HOME)
-            rule.waitUntil(15_000) {
-                runCatching {
-                    rule.onAllNodesWithText("学习已暂停").fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            // 退到后台后页面不在前台，Compose 不再产出帧，语义树停在最后一帧；
+            // 暂停结果只能回到前台再断言，这里只等 ON_STOP 派发到引擎。
+            delay(2_000)
         }
 
         // 回到前台：必须仍然是暂停，不能自动重新开麦跟读
