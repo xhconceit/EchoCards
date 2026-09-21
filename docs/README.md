@@ -23,3 +23,4 @@
 
 - [为什么仅开发 Android 原生 App](decisions/001-use-native-android.md)
 - [跟读识别改用 Vosk 端侧离线模型](decisions/002-offline-vosk-recognition.md)
+- [增加 macOS Desktop 客户端](decisions/003-add-macos-desktop.md)
