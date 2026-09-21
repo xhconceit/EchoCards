@@ -156,10 +156,17 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun ensureMicrophonePermission(): Boolean {
         if (hasMicrophonePermission()) return true
-        launchPermissionRequest?.invoke() ?: return false
         return suspendCancellableCoroutine { continuation ->
+            // 先登记 continuation，再拉起系统权限框，避免极快返回的权限结果
+            // 在 continuation 尚未保存时被丢弃，导致跟读流程永久等待。
+            if (launchPermissionRequest == null) {
+                continuation.resume(false)
+                return@suspendCancellableCoroutine
+            }
+            permissionContinuation?.cancel()
             permissionContinuation = continuation
             continuation.invokeOnCancellation { permissionContinuation = null }
+            launchPermissionRequest?.invoke()
         }
     }
 

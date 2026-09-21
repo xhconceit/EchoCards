@@ -70,6 +70,17 @@ class StudyAccessibilityTest {
             .config.getOrNull(SemanticsActions.CustomActions).orEmpty().map { it.label }
         assertTrue("卡片应提供切卡自定义操作，实际=$labels",
             labels.containsAll(listOf("上一张", "下一张")))
+
+        val semantics = rule.onNodeWithTag(STUDY_CARD_TAG).fetchSemanticsNode().config
+        assertTrue(
+            "正面卡片应包含标题和正文的播报语义",
+            semantics.getOrNull(SemanticsProperties.ContentDescription)
+                ?.any { it.contains("惯性") && it.contains("物体保持") } == true,
+        )
+        assertTrue(
+            "正面卡片应说明点击后的翻面动作",
+            semantics.getOrNull(SemanticsProperties.StateDescription)?.contains("点击查看快速记忆点") == true,
+        )
     }
 
     /** 键盘左右方向键切卡：→ 下一张，← 上一张。 */

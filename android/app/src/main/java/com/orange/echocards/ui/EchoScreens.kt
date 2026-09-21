@@ -430,6 +430,12 @@ internal fun StudyPage(
                     .testTag(STUDY_CARD_TAG)
                     // 屏幕阅读器在卡片上提供切卡操作，键盘用左右方向键，见 screens.md 第 12 节
                     .semantics {
+                        contentDescription = if (showingBack) {
+                            "快速记忆点：${card.memoryTip?.ifBlank { "暂无快速记忆点" } ?: "暂无快速记忆点"}"
+                        } else {
+                            "卡片：${card.title}。${card.content}"
+                        }
+                        stateDescription = if (showingBack) "背面，点击翻回正面" else "正面，点击查看快速记忆点"
                         customActions = listOf(
                             CustomAccessibilityAction("上一张") { switchCard(-1, 0f); true },
                             CustomAccessibilityAction("下一张") { switchCard(1, 0f); true },
