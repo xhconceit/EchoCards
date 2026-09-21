@@ -332,6 +332,8 @@ internal fun StudyPage(
 
     LaunchedEffect(showingBack) { flip.animateTo(if (showingBack) 180f else 0f, tween(420)) }
     LaunchedEffect(Unit) { pageFocusRequester.requestFocus() }
+    // 新卡片已经生效后允许下一次键盘／无障碍切卡；离场动画期间仍保留守卫避免重复推进。
+    LaunchedEffect(index) { switching = false }
     // 进入后台停止朗读与识别并保存位置，回前台保持暂停（learning-engine.md 第 10 节）
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {

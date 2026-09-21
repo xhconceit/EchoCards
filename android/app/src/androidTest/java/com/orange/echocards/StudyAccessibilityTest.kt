@@ -1,7 +1,6 @@
 package com.orange.echocards
 
 import android.view.KeyEvent
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -12,9 +11,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.pressKey
-import androidx.compose.ui.test.requestFocus
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.orange.echocards.data.CardEntity
@@ -89,16 +85,14 @@ class StudyAccessibilityTest {
         startManualStudy()
         awaitText("惯性")
 
-        // 学习页根容器保持焦点，切卡重组后仍能连续接收方向键。
-        rule.onNodeWithTag(STUDY_PAGE_TAG).requestFocus()
+        // 通过 Activity 发送真实 DPAD 事件，验证根容器在切卡重组后仍持续接收方向键。
         diag("after focus 1")
-        rule.onNodeWithTag(STUDY_PAGE_TAG).performKeyInput { pressKey(Key.DirectionRight) }
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_RIGHT)
         awaitCardAndSettle("加速度")
         diag("after right")
 
-        rule.onNodeWithTag(STUDY_PAGE_TAG).requestFocus()
         diag("after focus 2")
-        rule.onNodeWithTag(STUDY_PAGE_TAG).performKeyInput { pressKey(Key.DirectionLeft) }
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_LEFT)
         diag("after left")
         awaitCardAndSettle("惯性")
     }
@@ -107,13 +101,15 @@ class StudyAccessibilityTest {
         val merged = rule.onNodeWithTag(STUDY_CARD_TAG).fetchSemanticsNode().config
         val unmerged = rule.onNodeWithTag(STUDY_CARD_TAG, useUnmergedTree = true)
             .fetchSemanticsNode().config
+        val page = rule.onNodeWithTag(STUDY_PAGE_TAG).fetchSemanticsNode().config
         val focusedCount = rule.onAllNodes(
             SemanticsMatcher.expectValue(SemanticsProperties.Focused, true),
             useUnmergedTree = true,
         ).fetchSemanticsNodes().size
         val texts = rule.onAllNodesWithText("", substring = true).fetchSemanticsNodes()
             .flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }
-        android.util.Log.i("A11YDIAG", "[$label] mergedFocused=${merged.getOrNull(SemanticsProperties.Focused)} " +
+        android.util.Log.i("A11YDIAG", "[$label] pageFocused=${page.getOrNull(SemanticsProperties.Focused)} " +
+            "mergedFocused=${merged.getOrNull(SemanticsProperties.Focused)} " +
             "unmergedFocused=${unmerged.getOrNull(SemanticsProperties.Focused)} focusedNodes=$focusedCount " +
             "texts=$texts")
     }
@@ -127,7 +123,7 @@ class StudyAccessibilityTest {
     private suspend fun awaitCardAndSettle(title: String) {
         awaitText(title)
         rule.waitForIdle()
-        delay(1_000)
+        delay(2_000)
     }
 
     private fun awaitText(text: String, timeoutMillis: Long = 8_000) {
