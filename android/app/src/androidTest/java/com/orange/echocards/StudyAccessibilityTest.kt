@@ -7,8 +7,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.compose.ui.test.onAllNodes
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -30,7 +29,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.FileInputStream
 
 /**
  * 节点 7 R02 的真机验证：屏幕阅读器与键盘必须能切卡，见 docs/design/screens.md 第 12 节。
@@ -43,7 +41,7 @@ import java.io.FileInputStream
 class StudyAccessibilityTest {
 
     @get:Rule
-    val rule = createEmptyComposeRule()
+    val rule = createAndroidComposeRule<MainActivity>()
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.targetContext
@@ -61,7 +59,6 @@ class StudyAccessibilityTest {
     /** 卡片上应暴露「上一张」「下一张」自定义操作，供屏幕阅读器使用。 */
     @Test
     fun cardExposesPreviousAndNextCustomActions() = runBlocking {
-        startApp()
         goHome()
         openDeck()
         startManualStudy()
@@ -86,7 +83,6 @@ class StudyAccessibilityTest {
     /** 键盘左右方向键切卡：→ 下一张，← 上一张。 */
     @Test
     fun arrowKeysSwitchCards() = runBlocking {
-        startApp()
         goHome()
         openDeck()
         startManualStudy()
@@ -102,7 +98,6 @@ class StudyAccessibilityTest {
         rule.onNodeWithTag(STUDY_CARD_TAG).requestFocus()
         diag("after focus 2")
         rule.onNodeWithTag(STUDY_CARD_TAG).performKeyInput { pressKey(Key.DirectionLeft) }
-        delay(2_500)
         diag("after left")
         awaitCardAndSettle("惯性")
     }
@@ -131,11 +126,11 @@ class StudyAccessibilityTest {
     private suspend fun awaitCardAndSettle(title: String) {
         awaitText(title)
         rule.waitForIdle()
-        delay(1_500)
+        delay(1_000)
     }
 
-    private fun awaitText(text: String) {
-        rule.waitUntil(15_000) {
+    private fun awaitText(text: String, timeoutMillis: Long = 8_000) {
+        rule.waitUntil(timeoutMillis) {
             runCatching { rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
     }
@@ -161,13 +156,6 @@ class StudyAccessibilityTest {
             if (onHome) return
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             rule.waitForIdle()
-        }
-    }
-
-    private fun startApp() {
-        val component = "${context.packageName}/com.orange.echocards.MainActivity"
-        instrumentation.uiAutomation.executeShellCommand("am start -n $component").use { descriptor ->
-            FileInputStream(descriptor.fileDescriptor).readBytes()
         }
     }
 

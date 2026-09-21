@@ -50,6 +50,9 @@ android {
         compose = true
         buildConfig = true
     }
+    sourceSets {
+        getByName("androidTest").assets.srcDir("schemas")
+    }
 }
 
 dependencies {
@@ -78,6 +81,20 @@ dependencies {
     androidTestImplementation(libs.androidx.room.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Room 2.8.5 的 schema 解析器由 kotlinx.serialization 1.8 编译；Lifecycle 的严格传递约束
+// 会把设备测试运行时降到 1.7，导致 MigrationTestHelper 触发 AbstractMethodError。
+configurations.configureEach {
+    if (name.endsWith("AndroidTestRuntimeClasspath")) {
+        resolutionStrategy.force(
+            "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1",
+            "org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1",
+            "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1",
+            "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1",
+            "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1",
+        )
+    }
 }
 
 ksp {

@@ -2,7 +2,7 @@ package com.orange.echocards
 
 import android.view.KeyEvent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -22,7 +22,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.Assert.assertTrue
 import java.io.File
-import java.io.FileInputStream
 
 /**
  * 页面走查：在真机上走一遍「首页 → 新建卡组 → 我的 → 卡组详情 → 学习」，并逐屏截图。
@@ -40,9 +39,8 @@ import java.io.FileInputStream
 @RunWith(AndroidJUnit4::class)
 class ScreenWalkthroughTest {
 
-    /** 空规则：界面由 shell `am start` 拉起，测试只负责找节点和截图。 */
     @get:Rule
-    val rule = createEmptyComposeRule()
+    val rule = createAndroidComposeRule<MainActivity>()
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
 
@@ -56,7 +54,6 @@ class ScreenWalkthroughTest {
     fun walkThroughScreens() {
         runCatching { device.wakeUp() }
         seedDeck()
-        startApp()
         goHome()
 
         // 首页：搜索、创建/导入、底部导航图标
@@ -132,7 +129,6 @@ class ScreenWalkthroughTest {
     fun transitionsAreAnimated() {
         runCatching { device.wakeUp() }
         seedDeck()
-        startApp()
         goHome()
         awaitText("示例卡组")
 
@@ -197,15 +193,6 @@ class ScreenWalkthroughTest {
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             rule.waitForIdle()
         }
-    }
-
-    /** MIUI 会拦截后台启动界面，这里借 shell 的权限把主界面拉到前台。 */
-    private fun startApp() {
-        val component = "${instrumentation.targetContext.packageName}/com.orange.echocards.MainActivity"
-        instrumentation.uiAutomation.executeShellCommand("am start -n $component").use { descriptor ->
-            FileInputStream(descriptor.fileDescriptor).readBytes()
-        }
-        device.waitForIdle()
     }
 
     /** 直接写库造数据：一个卡组 + 两张卡片。 */

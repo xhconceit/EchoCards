@@ -3,7 +3,6 @@ package com.orange.echocards.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +52,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -62,8 +63,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -314,6 +317,7 @@ internal fun StudyPage(
     val slide = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val offset = remember { Animatable(0f) }
     val flip = remember { Animatable(0f) }
+    val cardFocusRequester = remember { FocusRequester() }
     var dragX by remember { mutableFloatStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
     var switching by remember { mutableStateOf(false) }
@@ -326,6 +330,8 @@ internal fun StudyPage(
     val speaking = state.phase == LearningPhase.SPEAKING
 
     LaunchedEffect(showingBack) { flip.animateTo(if (showingBack) 180f else 0f, tween(420)) }
+    // 进入学习页和每次切卡后恢复键盘焦点，确保连续按左右方向键都能切卡。
+    LaunchedEffect(card.id) { cardFocusRequester.requestFocus() }
     // 进入后台停止朗读与识别并保存位置，回前台保持暂停（learning-engine.md 第 10 节）
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -425,8 +431,8 @@ internal fun StudyPage(
                                 }
                             },
                         )
-                    }.clickable { if (!isDragging) onFlip() }
-                    .focusable()
+                    }.focusRequester(cardFocusRequester)
+                    .clickable { if (!isDragging) onFlip() }
                     .testTag(STUDY_CARD_TAG)
                     // 屏幕阅读器在卡片上提供切卡操作，键盘用左右方向键，见 screens.md 第 12 节
                     .semantics {
