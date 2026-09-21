@@ -21,6 +21,7 @@ import com.orange.echocards.data.CardEntity
 import com.orange.echocards.data.DeckEntity
 import com.orange.echocards.data.EchoDatabase
 import com.orange.echocards.ui.STUDY_CARD_TAG
+import com.orange.echocards.ui.STUDY_PAGE_TAG
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -88,16 +89,16 @@ class StudyAccessibilityTest {
         startManualStudy()
         awaitText("惯性")
 
-        // focusable() 暴露 RequestFocus；performKeyInput 只把按键发给已聚焦的节点
-        rule.onNodeWithTag(STUDY_CARD_TAG).requestFocus()
+        // 学习页根容器保持焦点，切卡重组后仍能连续接收方向键。
+        rule.onNodeWithTag(STUDY_PAGE_TAG).requestFocus()
         diag("after focus 1")
-        rule.onNodeWithTag(STUDY_CARD_TAG).performKeyInput { pressKey(Key.DirectionRight) }
+        rule.onNodeWithTag(STUDY_PAGE_TAG).performKeyInput { pressKey(Key.DirectionRight) }
         awaitCardAndSettle("加速度")
         diag("after right")
 
-        rule.onNodeWithTag(STUDY_CARD_TAG).requestFocus()
+        rule.onNodeWithTag(STUDY_PAGE_TAG).requestFocus()
         diag("after focus 2")
-        rule.onNodeWithTag(STUDY_CARD_TAG).performKeyInput { pressKey(Key.DirectionLeft) }
+        rule.onNodeWithTag(STUDY_PAGE_TAG).performKeyInput { pressKey(Key.DirectionLeft) }
         diag("after left")
         awaitCardAndSettle("惯性")
     }

@@ -3,6 +3,7 @@ package com.orange.echocards.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -317,7 +318,7 @@ internal fun StudyPage(
     val slide = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val offset = remember { Animatable(0f) }
     val flip = remember { Animatable(0f) }
-    val cardFocusRequester = remember { FocusRequester() }
+    val pageFocusRequester = remember { FocusRequester() }
     var dragX by remember { mutableFloatStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
     var switching by remember { mutableStateOf(false) }
@@ -330,8 +331,7 @@ internal fun StudyPage(
     val speaking = state.phase == LearningPhase.SPEAKING
 
     LaunchedEffect(showingBack) { flip.animateTo(if (showingBack) 180f else 0f, tween(420)) }
-    // 进入学习页和每次切卡后恢复键盘焦点，确保连续按左右方向键都能切卡。
-    LaunchedEffect(card.id) { cardFocusRequester.requestFocus() }
+    LaunchedEffect(Unit) { pageFocusRequester.requestFocus() }
     // 进入后台停止朗读与识别并保存位置，回前台保持暂停（learning-engine.md 第 10 节）
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -367,8 +367,23 @@ internal fun StudyPage(
         }
     }
 
+    fun handleDirectionalKey(event: androidx.compose.ui.input.key.KeyEvent): Boolean {
+        if (event.type != KeyEventType.KeyDown) return false
+        return when (event.key) {
+            Key.DirectionRight -> { switchCard(1, 0f); true }
+            Key.DirectionLeft -> { switchCard(-1, 0f); true }
+            else -> false
+        }
+    }
+
     val translation = if (isDragging) dragX else offset.value
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        Modifier.fillMaxSize()
+            .focusRequester(pageFocusRequester)
+            .focusable()
+            .testTag(STUDY_PAGE_TAG)
+            .onPreviewKeyEvent(::handleDirectionalKey),
+    ) {
         Row(Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
                 Icon(painterResource(EchoIcons.Close), contentDescription = "退出学习",
@@ -431,8 +446,8 @@ internal fun StudyPage(
                                 }
                             },
                         )
-                    }.focusRequester(cardFocusRequester)
-                    .clickable { if (!isDragging) onFlip() }
+                    }.clickable { if (!isDragging) onFlip() }
+                    .focusable()
                     .testTag(STUDY_CARD_TAG)
                     // 屏幕阅读器在卡片上提供切卡操作，键盘用左右方向键，见 screens.md 第 12 节
                     .semantics {
@@ -447,14 +462,7 @@ internal fun StudyPage(
                             CustomAccessibilityAction("下一张") { switchCard(1, 0f); true },
                         )
                     }
-                    .onPreviewKeyEvent { event ->
-                        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                        when (event.key) {
-                            Key.DirectionRight -> { switchCard(1, 0f); true }
-                            Key.DirectionLeft -> { switchCard(-1, 0f); true }
-                            else -> false
-                        }
-                    }, contentAlignment = Alignment.Center) {
+                    , contentAlignment = Alignment.Center) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp).padding(bottom = if (showingBack) 0.dp else 54.dp)
                         .graphicsLayer { if (showingBack) rotationY = 180f },
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -518,3 +526,4 @@ internal fun StudyPage(
 
 /** 学习页卡片的测试标签：设备测试用它定位可聚焦的卡片节点，验证无障碍切卡。 */
 internal const val STUDY_CARD_TAG = "study-card"
+internal const val STUDY_PAGE_TAG = "study-page"
