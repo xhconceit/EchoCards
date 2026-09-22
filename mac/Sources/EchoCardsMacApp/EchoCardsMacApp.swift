@@ -63,31 +63,37 @@ struct HomeView: View {
     @State private var detailDeck: DeckRecord?
     var body: some View {
         @Bindable var model = model
-        VStack(spacing: 16) {
-            HStack { Text("卡组").font(.largeTitle.bold()); Spacer(); TextField("搜索卡组", text: $model.search).textFieldStyle(.roundedBorder).frame(width: 220); Button("导入") { model.importJSON() }; Button("新建") { model.showNewDeck = true }.buttonStyle(.borderedProminent) }.padding(.horizontal)
-            if model.filteredDecks.isEmpty { VStack(spacing: 16) { Image(systemName: "rectangle.stack.badge.plus").font(.system(size: 48)); Text("还没有卡组").font(.title2.bold()); Text("创建或导入一个卡组，开始你的第一次学习。").foregroundStyle(.secondary); Button("创建第一个卡组") { model.showNewDeck = true }.buttonStyle(.borderedProminent) }.padding(40).glassCard() } else { List(model.filteredDecks) { deck in HStack { VStack(alignment: .leading) { Text(deck.title).font(.headline); Text(deck.description).foregroundStyle(.secondary) }; Spacer(); Button("打开") { detailDeck = deck }; Button(role: .destructive) { model.deleteDeck(deck) } label: { Image(systemName: "trash") }.buttonStyle(.borderless) }.contentShape(Rectangle()).onTapGesture { detailDeck = deck } }.listStyle(.inset) }
-        }.padding(.vertical)
-        .sheet(item: $detailDeck) { DeckDetailView(deck: $0) }
+        if let detailDeck {
+            DeckDetailView(deck: detailDeck) { self.detailDeck = nil }
+        } else {
+            VStack(spacing: 16) {
+                HStack { Text("卡组").font(.largeTitle.bold()); Spacer(); TextField("搜索卡组", text: $model.search).textFieldStyle(.roundedBorder).frame(width: 220); Button("导入") { model.importJSON() }; Button("新建") { model.showNewDeck = true }.buttonStyle(.borderedProminent) }.padding(.horizontal)
+                if model.filteredDecks.isEmpty { VStack(spacing: 16) { Image(systemName: "rectangle.stack.badge.plus").font(.system(size: 48)); Text("还没有卡组").font(.title2.bold()); Text("创建或导入一个卡组，开始你的第一次学习。").foregroundStyle(.secondary); Button("创建第一个卡组") { model.showNewDeck = true }.buttonStyle(.borderedProminent) }.padding(40).glassCard() } else { List(model.filteredDecks) { deck in HStack { VStack(alignment: .leading) { Text(deck.title).font(.headline); Text(deck.description).foregroundStyle(.secondary) }; Spacer(); Button("打开") { detailDeck = deck }; Button(role: .destructive) { model.deleteDeck(deck) } label: { Image(systemName: "trash") }.buttonStyle(.borderless) }.contentShape(Rectangle()).onTapGesture { detailDeck = deck } }.listStyle(.inset) }
+            }.padding(.vertical)
+        }
     }
 }
 
 struct DeckDetailView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
     let deck: DeckRecord
+    let onClose: () -> Void
     @State private var editorCard: CardRecord?
     @State private var showingNewCard = false
     @State private var showingStudy = false
     @Environment(\.openWindow) private var openWindow
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack { Text(deck.title).font(.largeTitle.bold()); Spacer(); Button("关闭") { dismiss() } }
+            HStack { Text(deck.title).font(.largeTitle.bold()); Spacer(); Button("关闭") { onClose() } }
             Text(deck.description).foregroundStyle(.secondary)
             HStack { Text("卡片").font(.title2.bold()); Spacer(); Button("添加卡片") { showingNewCard = true }.buttonStyle(.borderedProminent) }
             List(model.cards(for: deck)) { card in
                 HStack { VStack(alignment: .leading) { Text(card.title).font(.headline); Text(card.content).foregroundStyle(.secondary).lineLimit(2) }; Spacer(); Button("编辑") { editorCard = card }; Button(role: .destructive) { try? model.store.deleteCard(id: card.id) } label: { Image(systemName: "trash") }.buttonStyle(.borderless) }
             }
-            Spacer(); Button("打开悬浮卡片") { model.studyDeck = deck; openWindow(id: "floating-card") }.buttonStyle(.borderedProminent)
+            Spacer(); Button("打开悬浮卡片") {
+                model.studyDeck = deck
+                openWindow(id: "floating-card")
+            }.buttonStyle(.borderedProminent)
         }.padding(24).frame(minWidth: 650, minHeight: 500)
         .sheet(item: $editorCard) { CardEditorView(deck: deck, card: $0) }
         .sheet(isPresented: $showingNewCard) { CardEditorView(deck: deck, card: nil) }
