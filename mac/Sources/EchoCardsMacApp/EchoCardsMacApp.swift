@@ -121,7 +121,7 @@ struct FloatingCardView: View {
                 HStack { Text(deck.title).font(.headline); Spacer(); Text("\(index + 1) / \(cards.count)").foregroundStyle(.secondary) }
                 ZStack(alignment: .bottom) {
                     VStack(spacing: 14) { Text(card.title).font(.title.bold()); Text(flipped ? (card.memoryTip.isEmpty ? "暂无快速记忆点" : card.memoryTip) : card.content).font(.title3).multilineTextAlignment(.center).frame(maxWidth: .infinity, minHeight: 190).padding(28).glassCard() }.contentShape(Rectangle()).onTapGesture { flipped.toggle() }.gesture(DragGesture().onChanged { value in
-                        guard let window = NSApp.keyWindow else { return }
+                        guard let window = floatingWindow else { return }
                         if windowStartOrigin == nil { windowStartOrigin = window.frame.origin }
                         guard let start = windowStartOrigin else { return }
                         window.setFrameOrigin(NSPoint(x: start.x + value.translation.width, y: start.y - value.translation.height))
@@ -130,10 +130,28 @@ struct FloatingCardView: View {
                 }.onHover { hovering = $0 }
                 Text(holdToShowEnabled ? "按住 \(holdToShowKey) 显示 · 点击翻面 · \(previousCardKey) / \(nextCardKey) 切卡" : "点击翻面 · \(previousCardKey) 上一张 · \(nextCardKey) 下一张").font(.caption).foregroundStyle(.secondary)
             } else { Text("请从卡组详情打开悬浮卡片") }
-        }.padding(22).frame(minWidth: 460, minHeight: 300).background(WindowDragEnabler()).focusable(true).focused($focused).onAppear { focused = true; NSApp.keyWindow?.alphaValue = holdToShowEnabled ? 0 : 1; holdMonitor.start(enabled: holdToShowEnabled, previousKey: previousCardKey, nextKey: nextCardKey, onMove: { delta in move(delta) }, onVisibility: { visible in NSApp.keyWindow?.alphaValue = visible ? 1 : 0 }) }.onDisappear { holdMonitor.stop(); NSApp.keyWindow?.alphaValue = 1 }
+        }.padding(22).frame(minWidth: 460, minHeight: 300).background(WindowDragEnabler()).focusable(true).focused($focused).onAppear {
+            focused = true
+            DispatchQueue.main.async { floatingWindow?.alphaValue = holdToShowEnabled ? 0 : 1 }
+            holdMonitor.start(
+                enabled: holdToShowEnabled,
+                previousKey: previousCardKey,
+                nextKey: nextCardKey,
+                onMove: { delta in move(delta) },
+                onVisibility: { visible in floatingWindow?.alphaValue = visible ? 1 : 0 }
+            )
+        }.onDisappear {
+            holdMonitor.stop()
+            floatingWindow?.alphaValue = 1
+        }
     }
     private func move(_ delta: Int) { index = (index + delta + cards.count) % cards.count; flipped = false }
-    private func closeWindow() { NSApp.keyWindow?.close() }
+    private var floatingWindow: NSWindow? {
+        NSApp.windows.first {
+            $0.identifier?.rawValue == "floating-card" || $0.title == "悬浮卡片"
+        }
+    }
+    private func closeWindow() { floatingWindow?.close() }
 }
 
 private struct WindowDragEnabler: NSViewRepresentable {

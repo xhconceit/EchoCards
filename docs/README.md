@@ -10,8 +10,9 @@
 4. [数据模型](reference/data-model.md)
 5. [JSON 导入格式](reference/import-format.md)
 6. [Learning Engine](architecture/learning-engine.md)
-7. [语音接口](reference/speech-api.md)
-8. [跟读匹配](architecture/speech-matching.md)
+7. [状态管理与分层架构](architecture/state-management.md)
+8. [语音接口](reference/speech-api.md)
+9. [跟读匹配](architecture/speech-matching.md)
 
 ## 文档状态
 
