@@ -2,21 +2,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "EchoCardsMac",
-    platforms: [.macOS(.v26)],
-    products: [
-        .executable(name: "EchoCardsMac", targets: ["EchoCardsMacApp"])
-    ],
-    targets: [
-        .executableTarget(
-            name: "EchoCardsMacApp",
-            path: "Sources/EchoCardsMacApp",
-            linkerSettings: [.linkedLibrary("sqlite3")]
-        ),
-        .testTarget(
-            name: "EchoCardsMacAppTests",
-            dependencies: ["EchoCardsMacApp"],
-            path: "Tests/EchoCardsMacAppTests"
-        )
-    ]
+  name: "EchoCardsMac",  // 包名
+  platforms: [
+    .macOS(.v26)  //最低支持版本
+  ],
+  products: [  // 生成产物
+    .executable(  // 可启动的程序
+      name: "EchoCardsMac",
+      targets: ["EchoCardsMacApp"]
+    )
+  ],
+  targets: [
+    .executableTarget(
+      name: "EchoCardsMacApp"
+    ),
+    .testTarget(
+      name: "EchoCardsMacAppTests",
+      dependencies: ["EchoCardsMacApp"]
+    ),
+  ]
 )
