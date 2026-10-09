@@ -230,16 +230,6 @@ struct MainView: View {
               .multilineTextAlignment(.center)
           }
 
-          // 临时验证按钮
-          // 卡组列表完成后将由“打开卡组”操作代替
-          Button("打开浮动窗口") {
-            // 固定 id 对应 APP 中声明的唯一 Window
-            openWindow(id: "floating-study-window")
-            // 记录应用认为浮动窗口已经打开
-            appModel.markFloatingWindowOpen()
-          }
-          .buttonStyle(.borderedProminent)
-
           Toggle("在所有桌面空间显示", isOn: $appModel.settings.appearsOnAllSpaces)
             .toggleStyle(.switch)
             .frame(maxWidth: 240)
