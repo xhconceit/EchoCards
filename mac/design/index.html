@@ -178,16 +178,16 @@
     .setting-title{border-bottom:0;border-radius:16px;background:#f4f5fb;margin:8px}
     .setting-row{border-bottom:0;margin:4px 8px;border-radius:14px}
     .setting-row:hover{background:#f8f9fc}
-    #page-settings{max-width:none;width:100%;min-height:100%;background:#fff;border-radius:24px;padding:0 0 30px;overflow:hidden}
+    #page-settings{max-width:none;width:100%;min-height:100%;background:transparent;border-radius:24px;padding:0 0 30px;overflow:hidden}
     #page-settings .hero{padding:36px 32px 24px;margin:0 12px 0;background:transparent}
     #page-settings .hero:after{left:32px;bottom:8px}
     #page-settings .settings-grid{grid-template-columns:150px minmax(0,1fr);gap:12px;background:transparent;padding:0 24px 24px}
     #page-settings .settings-menu{padding:10px 0;gap:2px;background:transparent;border-radius:16px 0 0 16px}
     #page-settings .settings-menu button{padding:12px 14px;border-radius:10px;color:#68738b}
     #page-settings .settings-menu button.active{background:transparent;color:#1769e0;font-weight:700}
-    #page-settings .setting-group{margin:10px 0 0;border-radius:16px;box-shadow:0 4px 16px rgba(54,61,104,.05)}
-    #page-settings .setting-title{margin:0;padding:14px 16px;border-radius:16px 16px 0 0;background:#fff;color:#4c536d}
-    #page-settings .setting-row{padding:13px 16px;margin:0;border-radius:0}
+    #page-settings .setting-group{margin:10px 0 0;border-radius:16px;box-shadow:0 4px 16px rgba(54,61,104,.05);background:rgba(255,255,255,.52)}
+    #page-settings .setting-title{margin:0;padding:14px 16px;border-radius:16px 16px 0 0;background:rgba(238,233,255,.8);color:#4c536d}
+    #page-settings .setting-row{padding:13px 16px;margin:0;border-radius:0;background:rgba(255,255,255,.3)}
     #page-settings input[type=range]{accent-color:#1769e0}
     /* Carry the overview rhythm into every inner screen. */
     #page-library .hero,#page-detail .detail-head,#page-settings .hero{margin-bottom:26px}
@@ -204,7 +204,7 @@
     #page-settings .settings-menu{align-content:start;padding:14px 8px;background:transparent;border-radius:20px 0 0 20px}
     #page-settings .settings-menu button{min-height:42px;text-align:left;font-size:13px;transition:background .18s,color .18s,transform .18s}
     #page-settings .settings-menu button:hover{background:rgba(255,255,255,.55);color:var(--accent)}
-    #page-settings .settings-menu button.active{background:#fff;color:var(--accent);box-shadow:0 4px 12px rgba(91,91,214,.08)}
+    #page-settings .settings-menu button.active{background:rgba(232,228,255,.9);color:var(--accent);box-shadow:0 4px 12px rgba(91,91,214,.08)}
     #page-settings .setting-group{overflow:visible}
     #page-settings .setting-title{font-size:13px;color:#2d3150;padding:16px 18px}
     #page-settings .setting-row{min-height:68px;padding:14px 18px}
@@ -220,6 +220,35 @@
     /* Keep action controls visually quiet: icons carry the action, labels remain available on hover and to assistive tech. */
     .toolbar .btn,.hero .btn,.section-head>.btn,.study-callout>.btn,.float-controls .btn{width:38px;padding-inline:0;font-size:0}
     .toolbar .btn .icon,.hero .btn .icon,.section-head>.btn .icon,.study-callout>.btn .icon,.float-controls .btn .icon{width:18px;height:18px}
+    /* Soften the large center canvas: give the workspace a quiet, layered backdrop
+       so the white cards read as intentional surfaces instead of a blank wall. */
+    .content{
+      position:relative;
+      isolation:isolate;
+      background:
+        radial-gradient(560px 300px at 82% 0%,rgba(143,126,235,.16),transparent 70%),
+        radial-gradient(460px 280px at 8% 100%,rgba(108,193,214,.13),transparent 72%),
+        #f7f4ff;
+    }
+    .content::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:-1;
+      opacity:.42;
+      background-image:linear-gradient(rgba(115,93,210,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(115,93,210,.045) 1px,transparent 1px);
+      background-size:32px 32px;
+      mask-image:linear-gradient(to bottom,black,transparent 82%);
+    }
+    .content>.page{background:transparent}
+    #page-overview,#page-library,#page-detail{padding:4px 4px 30px}
+    #page-overview .hero,#page-library .hero{padding:22px 20px 4px}
+    #page-overview .stats,#page-library .stats{margin-inline:4px}
+    @media(max-width:640px){
+      #page-overview,#page-library,#page-detail{padding-inline:0}
+      #page-overview .hero,#page-library .hero{padding-inline:8px}
+    }
   </style>
 </head>
 <body>
@@ -258,9 +287,11 @@
           </section>
           <section class="page" id="page-settings">
             <div class="hero"><div><span class="eyebrow">偏好设置</span><h1>打造你的学习窗口</h1><p>更改会即时反映到当前打开的浮动学习窗。</p></div><button class="btn" data-action="reset"><svg class="icon icon-sm"><use href="#i-rotate"/></svg>恢复默认</button></div>
-            <div class="settings-grid"><div class="settings-menu"><button class="active">浮动窗口</button><button>学习行为</button><button>数据与互通</button></div><div>
-              <section class="setting-group"><div class="setting-title">窗口外观</div><div class="setting-row"><div class="setting-copy"><strong>窗口宽度</strong><small>适合与其他应用并排使用</small></div><div class="range-wrap"><input type="range" min="360" max="720" step="20" value="560" data-setting="width" aria-label="窗口宽度"><output data-output="width">560 px</output></div></div><div class="setting-row"><div class="setting-copy"><strong>背景透明度</strong><small>内容始终保持可读</small></div><div class="range-wrap"><input type="range" min="80" max="100" step="2" value="96" data-setting="opacity" aria-label="背景透明度"><output data-output="opacity">96%</output></div></div><div class="setting-row"><div class="setting-copy"><strong>卡片文字大小</strong><small>仅影响浮动窗口的主标题</small></div><div class="range-wrap"><input type="range" min="22" max="42" value="34" data-setting="font" aria-label="卡片文字大小"><output data-output="font">34 pt</output></div></div></section>
-              <section class="setting-group"><div class="setting-title">窗口行为</div><label class="setting-row"><span class="setting-copy"><strong>显示学习控制按钮</strong><small>隐藏后仍可使用键盘操作</small></span><span class="switch"><input type="checkbox" checked data-setting="controls"><span></span></span></label><label class="setting-row"><span class="setting-copy"><strong>允许拖动浮动窗口</strong><small>拖动顶部把手移动位置</small></span><span class="switch"><input type="checkbox" checked data-setting="drag"><span></span></span></label><label class="setting-row"><span class="setting-copy"><strong>启动时恢复学习位置</strong><small>记住上次卡组与卡片序号</small></span><span class="switch"><input type="checkbox" checked data-setting="restore"><span></span></span></label></section>
+            <div class="settings-grid"><div class="settings-menu"><button class="active" data-settings-tab="window">浮动窗口</button><button data-settings-tab="study">学习行为</button><button data-settings-tab="data">数据与互通</button></div><div>
+              <div class="settings-panel" data-settings-panel="window"><section class="setting-group"><div class="setting-title">窗口外观</div><div class="setting-row"><div class="setting-copy"><strong>窗口宽度</strong><small>适合与其他应用并排使用</small></div><div class="range-wrap"><input type="range" min="360" max="720" step="20" value="560" data-setting="width" aria-label="窗口宽度"><output data-output="width">560 px</output></div></div><div class="setting-row"><div class="setting-copy"><strong>背景透明度</strong><small>内容始终保持可读</small></div><div class="range-wrap"><input type="range" min="80" max="100" step="2" value="96" data-setting="opacity" aria-label="背景透明度"><output data-output="opacity">96%</output></div></div><div class="setting-row"><div class="setting-copy"><strong>卡片文字大小</strong><small>仅影响浮动窗口的主标题</small></div><div class="range-wrap"><input type="range" min="22" max="42" value="34" data-setting="font" aria-label="卡片文字大小"><output data-output="font">34 pt</output></div></div></section>
+              <section class="setting-group"><div class="setting-title">窗口行为</div><label class="setting-row"><span class="setting-copy"><strong>显示学习控制按钮</strong><small>隐藏后仍可使用键盘操作</small></span><span class="switch"><input type="checkbox" checked data-setting="controls"><span></span></span></label><label class="setting-row"><span class="setting-copy"><strong>允许拖动浮动窗口</strong><small>拖动顶部把手移动位置</small></span><span class="switch"><input type="checkbox" checked data-setting="drag"><span></span></span></label><label class="setting-row"><span class="setting-copy"><strong>启动时恢复学习位置</strong><small>记住上次卡组与卡片序号</small></span><span class="switch"><input type="checkbox" checked data-setting="restore"><span></span></span></label></section></div>
+              <div class="settings-panel" data-settings-panel="study" hidden><section class="setting-group"><div class="setting-title">学习行为</div><label class="setting-row"><span class="setting-copy"><strong>完成卡片后自动进入下一张</strong><small>翻面后直接推进学习节奏</small></span><span class="switch"><input type="checkbox" checked><span></span></span></label><label class="setting-row"><span class="setting-copy"><strong>使用键盘快捷键</strong><small>空格翻面，左右方向键切换</small></span><span class="switch"><input type="checkbox" checked><span></span></span></label></section></div>
+              <div class="settings-panel" data-settings-panel="data" hidden><section class="setting-group"><div class="setting-title">数据与互通</div><div class="setting-row"><div class="setting-copy"><strong>导入与导出</strong><small>使用 JSON 文件备份或迁移卡组</small></div><button class="btn" data-action="import">导入</button><button class="btn" data-action="export">导出</button></div><label class="setting-row"><span class="setting-copy"><strong>本地保存学习进度</strong><small>仅保存在当前浏览器，不上传云端</small></span><span class="switch"><input type="checkbox" checked><span></span></span></label></section></div>
             </div></div>
           </section>
         </div>
@@ -309,7 +340,7 @@
     function move(delta){const d=decks[state.studyDeck];state.studyCard=(state.studyCard+delta+d.cards.length)%d.cards.length;state.back=false;d.progress=Math.min(100,Math.max(d.progress,Math.round((state.studyCard+1)/d.cards.length*100)));renderStudy();render()}
     function action(name){if(name==='import')return importDialog();if(name==='cancel')return closeDialog();if(name==='choose-file')return $('#file-input').click();if(name==='resume')return startStudy(0);if(name==='study')return startStudy(state.selected);if(name==='close-study'){$('#study-layer').hidden=true;render();return}if(name==='prev')return move(-1);if(name==='next')return move(1);if(name==='edit')return editDialog();if(name==='save-edit'){const value=$('#edit-title').value.trim();if(!value){$('#edit-error').textContent='请输入卡组名称后再保存。';return}decks[state.selected].title=value;decks[state.selected].description=$('#edit-description').value.trim()||'暂无卡组说明';closeDialog();render();toast('卡组信息已更新');return}if(name==='delete'){const d=decks[state.selected];openDialog(`<h2 id="dialog-title">删除“${esc(d.title)}”？</h2><p>这个卡组和其中的 ${d.cards.length} 张卡片将从当前原型中移除。</p><div class="warning">此操作无法撤销，请确认不再需要该卡组。</div><div class="dialog-actions"><button class="btn" data-action="cancel">取消</button><button class="btn danger" data-action="confirm-delete">删除卡组</button></div>`);return}if(name==='confirm-delete'){decks.splice(state.selected,1);state.selected=Math.max(0,Math.min(state.selected,decks.length-1));closeDialog();go('library');toast('卡组已删除');return}if(name==='export'){const d=decks[state.selected],blob=new Blob([JSON.stringify({title:d.title,description:d.description,cards:d.cards},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=d.title+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),500);toast('已导出 JSON 文件');return}if(name==='reset'){state.settings={width:560,opacity:96,font:34,controls:true,drag:true,restore:true};$$('[data-setting]').forEach(el=>{const v=state.settings[el.dataset.setting];el.type==='checkbox'?el.checked=v:el.value=v});syncSettings();toast('已恢复默认窗口设置')}}
     function syncSettings(){for(const [k,v] of Object.entries(state.settings)){const out=$(`[data-output="${k}"]`);if(out)out.textContent=v+(k==='width'?' px':k==='font'?' pt':'%')}if(!$('#study-layer').hidden)renderStudy()}
-    document.addEventListener('click',e=>{const page=e.target.closest('[data-page]'),deck=e.target.closest('[data-deck]'),act=e.target.closest('[data-action]'),card=e.target.closest('[data-card]');if(page)return go(page.dataset.page);if(deck){state.selected=+deck.dataset.deck;return go('detail')}if(act)return action(act.dataset.action);if(card)return cardDialog(+card.dataset.card)});
+    document.addEventListener('click',e=>{const page=e.target.closest('[data-page]'),deck=e.target.closest('[data-deck]'),act=e.target.closest('[data-action]'),card=e.target.closest('[data-card]'),tab=e.target.closest('[data-settings-tab]');if(page)return go(page.dataset.page);if(tab){$$('[data-settings-tab]').forEach(b=>b.classList.toggle('active',b===tab));$$('[data-settings-panel]').forEach(p=>p.hidden=p.dataset.settingsPanel!==tab.dataset.settingsTab);return}if(deck){state.selected=+deck.dataset.deck;return go('detail')}if(act)return action(act.dataset.action);if(card)return cardDialog(+card.dataset.card)});
     $('#float-content').addEventListener('click',()=>{state.back=!state.back;renderStudy()});
     document.addEventListener('input',e=>{const k=e.target.dataset.setting;if(!k)return;state.settings[k]=e.target.type==='checkbox'?e.target.checked:+e.target.value;syncSettings()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#modal').hidden)closeDialog();else if(!$('#study-layer').hidden)action('close-study');return}if($('#study-layer').hidden||!$('#modal').hidden||['INPUT','TEXTAREA'].includes(e.target.tagName))return;if(e.key==='ArrowLeft'){e.preventDefault();move(-1)}if(e.key==='ArrowRight'){e.preventDefault();move(1)}if(e.code==='Space'){e.preventDefault();state.back=!state.back;renderStudy()}});
