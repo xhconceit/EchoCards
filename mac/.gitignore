@@ -1,5 +1,8 @@
 # Swift Package Manager build output
 .build/
 
+# Xcode SwiftPM user state
+.swiftpm/
+
 # Locally packaged .app bundle produced by scripts/package-app.sh
 dist/

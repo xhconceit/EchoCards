@@ -11,6 +11,9 @@ temp/
 *.tmp
 *.temp
 
+# Swift Package Manager build output
+.build/
+
 
 ._*
 
