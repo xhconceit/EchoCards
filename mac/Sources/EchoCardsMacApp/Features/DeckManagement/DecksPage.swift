@@ -75,7 +75,14 @@ struct DecksPage: View {
                         // LazyVStack 和 VStack 类似
                         // 但它只在内容接近可见区域创建子视图
                         // 更适合放在 ScrollView 中显示列表
-                        LazyVStack(spacing: 10) {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(
+                                    .adaptive(minimum: 240, maximum: 360),
+                                    spacing: 18
+                                )
+                            ], spacing: 18
+                        ) {
                             // ForEach 会为数组中每个 Deck
                             // 分别创建一行界面
                             //
@@ -83,7 +90,7 @@ struct DecksPage: View {
                             // 因此 SwiftUI 会使用 deck.id 区分每一行
                             ForEach(appModel.decks) { deck in
 
-                                DeckRowView(
+                                DeckCardView(
                                     deck: deck,
                                     onEdit: {
                                         // DecksPage 仍然持有弹窗状态。
@@ -118,149 +125,6 @@ struct DecksPage: View {
                             .multilineTextAlignment(.center)
                     }
 
-                    Toggle("在所有桌面空间显示", isOn: $appModel.settings.appearsOnAllSpaces)
-                        .toggleStyle(.switch)
-                        .frame(maxWidth: 240)
-
-                    // 控制浮动窗口是否允许通过鼠标拖动
-                    Toggle("允许拖动浮动窗口", isOn: $appModel.settings.allowsDragging)
-                        .toggleStyle(.switch)
-                        .frame(maxWidth: 240)
-
-                    // 控制浮动窗口底部是否显示
-                    Toggle("显示控制按钮", isOn: $appModel.settings.showsControls)
-                        .toggleStyle(.switch)
-                        .frame(maxWidth: 240)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("卡片文字大小：\(appModel.settings.cardFontSize, specifier: "%.0f")")
-
-                        Slider(
-                            // 滑块直接修改共享设置
-                            value: $appModel.settings.cardFontSize,
-                            in: 16...48,
-                            step: 1
-                        )
-                    }.frame(maxWidth: 240)
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        // 浮动窗口宽度设置
-                        Text("窗口宽度：\(appModel.settings.floatingWindowWidth, specifier: "%.0f")")
-                        Slider(
-                            value: $appModel.settings.floatingWindowWidth,
-                            in: 280...800,
-                            step: 10
-                        )
-
-                        // 浮动窗口高度设置
-
-                        Text(
-                            "窗口高度：\(appModel.settings.floatingWindowHeight, specifier: "%.0f")"
-                        )
-
-                        Slider(
-                            value: $appModel.settings.floatingWindowHeight,
-                            in: 180...600,
-                            step: 10
-                        )
-                    }.frame(maxWidth: 240)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(
-                            "背景透明度：\(appModel.settings.floatingWindowOpacity * 100, specifier: "%.0f")"
-                        )
-                        Slider(
-                            // 只调整浮动窗口玻璃背景的透明度
-                            value: $appModel.settings.floatingWindowOpacity,
-                            // 最低保留 15% 避免背景完全消失
-                            in: 0.15...1.0,
-                            // 每次变化 5%
-                            step: 0.05
-                        )
-                    }
-                    .frame(maxWidth: 240)
-
-                    Button("恢复默认设置") {
-                        // 恢复 UserSettings.defaults 中定义的全部默认值。
-                        appModel.resetSettings()
-                    }
-                    .buttonStyle(.bordered)
-
-                    Toggle("启动时恢复浮动窗口", isOn: $appModel.settings.restoresFloatingWindow)
-                        .toggleStyle(.switch)
-                        .frame(maxWidth: 240)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("默认学习模式")
-
-                        Picker(
-                            "默认学习模式",
-                            selection: $appModel.settings.defaultLearningMode
-                        ) {
-                            // 遍历 LearningMode 中定义的所有学习模式
-                            ForEach(LearningMode.allCases) { mode in
-                                Text(mode.displayName)
-                                    .tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    .frame(maxWidth: 360)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        // 显示当前朗读速度。
-                        //
-                        // 例如 1.0 表示正常速度，
-                        // 0.5 表示较慢，2.0 表示较快。
-                        Text(
-                            "朗读速度：\(appModel.settings.speechRate, specifier: "%.1f") 倍"
-                        )
-
-                        Slider(
-                            // 直接修改并保存用户设置。
-                            value: $appModel.settings.speechRate,
-
-                            // 第一版允许 0.5 到 2.0 倍速。
-                            in: 0.5...2.0,
-
-                            // 每次调整 0.1。
-                            step: 0.1
-                        )
-
-                    }
-                    .frame(maxWidth: 240)
-
-                    Button("恢复正常语速") {
-                        // 1.0 表示正常朗读速度。
-                        appModel.settings.speechRate = 1.0
-                    }
-                    .buttonStyle(.link)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        // 存储值是毫秒，因此除以 1000 后显示为秒。
-                        Text(
-                            "自动翻页延迟：\(Double(appModel.settings.autoAdvanceDelayMilliseconds) / 1000, specifier: "%.1f") 秒"
-                        )
-
-                        Slider(
-                            // Slider 需要 Binding<Double>
-                            // 但设置中保存的时 Int 因此需要手动转换
-                            value: Binding(
-                                get: {
-                                    // 读取时：把毫秒转换成秒
-                                    Double(
-                                        appModel.settings.autoAdvanceDelayMilliseconds
-                                    ) / 1000
-                                },
-                                set: { seconds in
-                                    appModel.settings.autoAdvanceDelayMilliseconds = Int(
-                                        seconds * 1000)
-                                }
-                            ),
-                            in: 0.5...10.0,
-                            step: 0.5
-                        )
-                    }.frame(maxWidth: 240)
                 }
                 .padding(24)
             }
@@ -482,77 +346,104 @@ struct DecksPage: View {
     }
 
     // 将卡组名称转换为适合 macOS 文件名的文本。
-// 例如“英语 / Unit 1”会变成“英语 - Unit 1”。
-private static func safeFilename(from title: String) -> String {
+    // 例如“英语 / Unit 1”会变成“英语 - Unit 1”。
+    private static func safeFilename(from title: String) -> String {
 
-  // 这些字符可能被系统理解成文件路径分隔符。
-  let forbiddenCharacters = CharacterSet(
-    charactersIn: "/:\\"
-  )
+        // 这些字符可能被系统理解成文件路径分隔符。
+        let forbiddenCharacters = CharacterSet(
+            charactersIn: "/:\\"
+        )
 
-  // 将不允许的字符替换为短横线。
-  let filename = title
-    .components(separatedBy: forbiddenCharacters)
-    .joined(separator: "-")
-    .trimmingCharacters(in: .whitespacesAndNewlines)
+        // 将不允许的字符替换为短横线。
+        let filename =
+            title
+            .components(separatedBy: forbiddenCharacters)
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-  // 防止卡组名称只有空格或禁止字符时生成空文件名。
-  return filename.isEmpty ? "EchoCards" : filename
+        // 防止卡组名称只有空格或禁止字符时生成空文件名。
+        return filename.isEmpty ? "EchoCards" : filename
+    }
+
 }
 
-}
-
-// DeckRowView 只负责“一行卡组”的显示和用户操作
+// DeckCardView 只负责“一行卡组”的显示和用户操作
 // 它不持有数据库状态；点击后的业务操作通过闭包交给 DecksPage
-private struct DeckRowView: View {
+private struct DeckCardView: View {
     let deck: Deck
     let onEdit: () -> Void
     let onExport: () -> Void
     let onDelete: () -> Void
 
-    var body: some View {
-        NavigationLink {
-            // 点击卡组后进入已有的详情页
-            DeckDetailView(deck: deck)
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "rectangle.stack")
-                    .font(.title2)
+  var body: some View {
+  NavigationLink {
+    // 点击卡片进入现有的卡组详情页。
+    DeckDetailView(deck: deck)
+  } label: {
+    VStack(alignment: .leading, spacing: 16) {
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(deck.title)
-                        .font(.headline)
+      HStack(alignment: .top) {
+        // 卡组图标区域。
+        Image(systemName: "rectangle.stack.fill")
+          .font(.title2)
+          .foregroundStyle(.tint)
+          .frame(width: 42, height: 42)
+          .background(.tint.opacity(0.12))
+          .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    // 没有说明时不占有额外空间
-                    if let description = deck.description, !description.isEmpty {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                }
+        Spacer()
 
-                Spacer()
+        // 保留右键菜单外也可见的展开提示。
+        Image(systemName: "arrow.up.right")
+          .foregroundStyle(.tertiary)
+      }
 
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(14)
-        .contentShape(RoundedRectangle(cornerRadius: 16))
-        .contextMenu {
-            Button("编辑卡组", action: onEdit)
+      VStack(alignment: .leading, spacing: 6) {
+        Text(deck.title)
+          .font(.headline)
+          .foregroundStyle(.primary)
+          .lineLimit(1)
 
-            Divider()
+        // 没有说明时保留固定高度，让卡片标题对齐。
+        Text(deck.description?.isEmpty == false
+             ? deck.description!
+             : "点击查看和管理卡片")
+          .font(.callout)
+          .foregroundStyle(.secondary)
+          .lineLimit(2)
+          .frame(maxHeight: 42, alignment: .top)
+      }
 
-            Button("导出 JSON", action: onExport)
+      Spacer(minLength: 0)
 
-            Divider()
-
-            Button("删除卡组", action: onDelete)
-        }
-        .buttonStyle(.plain)
-        .glassEffect(in: .rect(cornerRadius: 16))
+      // 这里暂时不显示虚假的数量或进度。
+      // 后面接入卡片统计数据后，再替换为真实内容。
+      Text("打开卡组")
+        .font(.caption)
+        .fontWeight(.medium)
+        .foregroundStyle(.tint)
     }
+    .padding(20)
+    .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
+    .background(.background)
+    .clipShape(RoundedRectangle(cornerRadius: 20))
+    .overlay {
+      RoundedRectangle(cornerRadius: 20)
+        .stroke(.quaternary, lineWidth: 1)
+    }
+  }
+  .buttonStyle(.plain)
+  .contextMenu {
+    Button("编辑卡组", action: onEdit)
+
+    Divider()
+
+    Button("导出 JSON", action: onExport)
+
+    Divider()
+
+    Button("删除卡组", role: .destructive, action: onDelete)
+  }
+}
 
 }
