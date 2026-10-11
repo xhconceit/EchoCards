@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EchoCards}/mac",
+            "name": "Debug EchoCardsMac (mac)",
+            "target": "EchoCardsMac",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug EchoCardsMac (mac)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EchoCards}/mac",
+            "name": "Release EchoCardsMac (mac)",
+            "target": "EchoCardsMac",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release EchoCardsMac (mac)"
+        }
+    ]
+}
