@@ -61,4 +61,12 @@ protocol DeckRepository: Sendable {
   func insertCard(
     _ card: Card
   ) async throws
+
+  // 更新一张已经存在的卡片
+  //
+  // 使用 card.id 确定需要更新的卡片
+  // 不改变卡片所属的卡组和原来的排序位置
+  func updateCard(
+    _ card: Card
+  ) async throws
 }

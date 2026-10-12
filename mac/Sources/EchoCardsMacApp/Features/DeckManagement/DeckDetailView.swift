@@ -38,6 +38,11 @@ struct DeckDetailView: View {
   // nil 时不显示弹窗
   @State private var deckPendingEditing: Deck?
 
+  // 当前准备编辑的卡片
+  //
+  // nil 把表示没有打开卡片编辑弹窗
+  @State private var cardPendingEditing: Card?
+
   var body: some View {
     VStack(spacing: 16) {
       // 顶部卡组信息
@@ -53,14 +58,6 @@ struct DeckDetailView: View {
             .foregroundStyle(.secondary)
         }
 
-        // Text(deck.title)
-        //   .font(.largeTitle)
-        //   .fontWeight(.semibold)
-        //
-        // if let description = deck.description {
-        //   Text(description)
-        //     .foregroundStyle(.secondary)
-        // }
       }
 
       Button("在浮动窗口中学习") {
@@ -102,19 +99,32 @@ struct DeckDetailView: View {
         // Card 遵守 Identifiable
         // SwiftUI 会使用 card.id 区分每一行
         List(cards) { card in
-          VStack(
-            alignment: .leading,
-            spacing: 5,
-          ) {
-            Text(card.title)
-              .font(.headline)
+          HStack(spacing: 12) {
+            VStack(
+              alignment: .leading,
+              spacing: 5
+            ) {
+              Text(card.title)
+                .font(.headline)
 
-            Text(card.content)
-              .font(.callout)
-              .foregroundStyle(.secondary)
-              .lineLimit(2)
+              Text(card.content)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button("编辑", systemImage: "pencil") {
+              // 保存用户点击的卡片
+              //
+              // 下一步会根据这个状态显示编辑弹窗
+              cardPendingEditing = card
+            }
+            .buttonStyle(.borderless)
           }
           .padding(.vertical, 4)
+
         }
       }
     }
@@ -154,7 +164,25 @@ struct DeckDetailView: View {
       DeckEditView(deck: editingDeck)
         .environment(appModel)
     }
+    .sheet(item: $cardPendingEditing) { editingCard in
+      CardEditView(
+        card: editingCard,
+        onSaved: {
+          // 卡片保存成功后重新读取当前卡片卡组的卡片
+          Task { @MainActor in
+            do {
+              let loadedCards = try await appModel.fetchCards(deckID: deck.id)
 
+              cards = loadedCards
+              errorMessage = nil
+            } catch {
+              errorMessage = error.localizedDescription
+            }
+          }
+        }
+      )
+      .environment(appModel)
+    }
   }
 
 }

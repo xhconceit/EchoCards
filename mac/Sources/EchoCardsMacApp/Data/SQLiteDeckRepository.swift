@@ -514,4 +514,44 @@ actor SQLiteDeckRepository: DeckRepository {
     _ = try statement.step()
   }
 
+  // 更新数据库中已经存在的卡片
+  func updateCard(_ card: Card) async throws {
+    let statement = try database.prepare(
+      """
+      UPDATE cards
+      SET title = ?,
+        content = ?,
+        speech_text = ?,
+        memory_tip = ?,
+        revision = ?,
+        updated_at = ?
+        WHERE id = ?
+      """)
+
+    // 第一个问号：编辑后的标题
+    try statement.bindText(card.title, at: 1)
+
+    // 第二个问号：编辑后的正文
+    try statement.bindText(card.content, at: 2)
+
+    // 可选值为 nil 时会保存成 SQL NULL
+    try statement.bindText(card.speechText, at: 3)
+
+    try statement.bindText(card.memoryTip, at: 4)
+
+    // 每次编辑后递增的内容版本号
+    try statement.bindInt(card.revision, at: 5)
+
+    // 将更新时间转换成数据库使用的字符串
+    try statement.bindText(dateFormatter.string(from: card.updatedAt), at: 6)
+
+    // 根据卡片 ID 限定值更新这一个卡片
+    //
+    // WHERE 条件不能忽略 否则所有卡片都会修改
+    try statement.bindText(card.id.uuidString, at: 7)
+
+    // 执行 UPDATE
+    _ = try statement.step()
+  }
+
 }

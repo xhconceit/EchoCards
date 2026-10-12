@@ -1,0 +1,33 @@
+{
+  "title": "日常英语测试卡组",
+  "description": "用于验证知声卡 JSON 导入、可选字段和卡片顺序",
+  "cards": [
+    {
+      "title": "问候",
+      "content": "Hello, how are you?",
+      "speechText": "Hello, how are you?",
+      "memoryTip": "见面时询问对方近况。"
+    },
+    {
+      "title": "感谢",
+      "content": "Thank you for your help.",
+      "speechText": "Thank you for your help.",
+      "memoryTip": "Thank you for 后面接感谢的原因。"
+    },
+    {
+      "title": "道别",
+      "content": "See you tomorrow.",
+      "memoryTip": "See you 加时间，表示到时再见。"
+    },
+    {
+      "title": "询问价格",
+      "content": "How much is this?"
+    },
+    {
+      "title": "请求帮助",
+      "content": "Could you help me, please?",
+      "speechText": null,
+      "memoryTip": null
+    }
+  ]
+}

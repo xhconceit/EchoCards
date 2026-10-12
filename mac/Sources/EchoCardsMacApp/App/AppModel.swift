@@ -357,4 +357,52 @@ final class AppModel {
     try await deckRepository.insertCard(card)
   }
 
+  // 修改已有卡片的内容
+  func updateCard(
+    _ card: Card,
+    title: String,
+    content: String,
+    speechText: String,
+    memoryTip: String
+  ) async throws {
+    // 清理用户输入首尾的空格和换行
+    let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    let cleanedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    // 标题和正文是必填字段
+    guard !cleanedTitle.isEmpty else {
+      throw CardEditingError.emptyTitle
+    }
+
+    guard !cleanedContent.isEmpty else {
+      throw CardEditingError.emptyContent
+    }
+
+    // 清理两个可选字段
+    let cleanedSpeechText = speechText.trimmingCharacters(in: .whitespacesAndNewlines)
+    let cleanedMemoryTip = memoryTip.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    // Card 是值类型，先复制一份再修改
+    //
+    // 没有修改 id deckID position 和 createdAt
+    // 因此卡片身份 所属卡组 排序和创建时间都会保留
+    var updatedCard = card
+    updatedCard.title = cleanedTitle
+    updatedCard.content = cleanedContent
+
+    // 空字符串统一保存成nil
+    updatedCard.speechText = cleanedSpeechText.isEmpty ? nil : cleanedSpeechText
+    updatedCard.memoryTip = cleanedMemoryTip.isEmpty ? nil : cleanedMemoryTip
+
+    // 内容发生编辑后 版本号递增
+    updatedCard.revision += 1
+
+    // 记录本次修改时间
+    updatedCard.updatedAt = Date()
+
+    // 交给 Repository 保存
+    try await deckRepository.updateCard(updatedCard)
+  }
+
 }

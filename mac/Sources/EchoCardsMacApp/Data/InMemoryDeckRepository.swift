@@ -139,15 +139,42 @@ actor InMemoryDeckRepository: DeckRepository {
   }
 
   func insertCard(_ card: Card) async throws {
-      // 先取出这个卡组已有的卡片
-      // 找不到时使用空数组
-      var cards = cardsByDeckID[card.deckID] ?? []
+    // 先取出这个卡组已有的卡片
+    // 找不到时使用空数组
+    var cards = cardsByDeckID[card.deckID] ?? []
 
-      // 把新卡片添加到数组尾部
-      cards.append(card)
+    // 把新卡片添加到数组尾部
+    cards.append(card)
 
-      // 把修改后的数组写回字典
-      cardsByDeckID[card.deckID] = cards
+    // 把修改后的数组写回字典
+    cardsByDeckID[card.deckID] = cards
+  }
+
+  // 更新内存中已经存在的卡片
+  func updateCard(_ card: Card) async throws {
+    // 根据卡组 ID 取出这张卡片所属卡组的全部卡片
+    //
+    // 如果卡组不存在，就直接结束，不执行更新
+    guard var cards = cardsByDeckID[card.deckID] else {
+      return
+    }
+
+    // 根据卡片 ID 找到它在数组中的位置
+    //
+    // firstIndex 找不到匹配元素时返回 nil
+    guard
+      let index = cards.firstIndex(where: { existingCard in
+        existingCard.id == card.id
+      })
+    else {
+      return
+    }
+
+    // 使用编辑后的卡片替换原来的卡片
+    cards[index] = card
+
+    // 数组时值类型 修改副本后必须重新写回字典
+    cardsByDeckID[card.deckID] = cards
   }
 
 }

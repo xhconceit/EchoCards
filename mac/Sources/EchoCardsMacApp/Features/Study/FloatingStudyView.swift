@@ -16,18 +16,6 @@ struct FloatingStudyView: View {
 
   var body: some View {
     VStack(spacing: 12) {
-      // 浮动窗口的拖动把手
-      // 用户按住它拖动时，移动整个窗口
-      if appModel.settings.allowsDragging {
-        Capsule()
-          .fill(.secondary.opacity(0.45))
-          .frame(width: 36, height: 5)
-          .contentShape(Rectangle())
-          .gesture(WindowDragGesture())
-          .allowsWindowActivationEvents()
-          .help("拖动浮动窗口")
-      }
-
       // 如果加载失败，优先显示错误
       if let loadErrorMessage {
         ContentUnavailableView(
@@ -102,6 +90,16 @@ struct FloatingStudyView: View {
       width: appModel.settings.floatingWindowWidth,
       height: appModel.settings.floatingWindowHeight
     )
+    // 让窗口中的空白，文字和卡片区域都能接收拖动手势
+    .contentShape(Rectangle())
+    // simultaneousGesture 不会取代卡片点击和按钮点击
+    // 拖动功能由 allowsDragging 设置控制
+    .simultaneousGesture(
+      WindowDragGesture(),
+      including: appModel.settings.allowsDragging ? .all : .none
+    )
+    // 窗口未激活时也允许直接开始拖动
+    .allowsWindowActivationEvents()
     .background {
       // 使用独立视图绘制玻璃背景
       //

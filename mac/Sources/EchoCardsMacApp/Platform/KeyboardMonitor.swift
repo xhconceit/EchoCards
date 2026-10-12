@@ -1,5 +1,10 @@
 import AppKit
 
+// 监听学习窗口使用的键盘快捷键
+//
+// 同时监听
+// 1. 应用处于激活状态时的本地按键
+// 2. 用户正在使用其他 App 时的全局按键
 @MainActor
 final class KeyboardMonitor {
   private var monitor: Any?
