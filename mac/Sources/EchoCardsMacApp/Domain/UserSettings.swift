@@ -45,7 +45,8 @@ struct UserSettings: Equatable, Codable, Sendable {
             floatingWindowHeight: 300,
             floatingWindowOpacity: 1.0,
             cardFontSize: 24,
-            showsControls: true,
+            // 默认保持浮动窗口简洁，学习操作由鼠标点击和全局快捷键完成。
+            showsControls: false,
             appearsOnAllSpaces: false,
             allowsDragging: true,
             restoresFloatingWindow: false,

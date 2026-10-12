@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -116,6 +117,22 @@ struct DecksPage: View {
                         isShowingFileImporter = true
                     }
                     .buttonStyle(.borderedProminent)
+
+                    Button("复制 AI 导入提示词", systemImage: "doc.on.clipboard") {
+                        // 将符合知声卡导入规范的提示词复制到系统剪贴板。
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(
+                            Self.aiImportPrompt,
+                            forType: .string
+                        )
+                        importStatusMessage = "已复制 AI 导入提示词"
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("从剪贴板导入 JSON", systemImage: "clipboard") {
+                        importJSONFromPasteboard()
+                    }
+                    .buttonStyle(.bordered)
 
                     // 有导入结果时显示提示文字
                     if let importStatusMessage {
@@ -345,6 +362,37 @@ struct DecksPage: View {
         }
     }
 
+    // 读取剪贴板中的 JSON 文本，并走与文件导入相同的校验流程。
+    private func importJSONFromPasteboard() {
+        guard let json = NSPasteboard.general.string(forType: .string) else {
+            importStatusMessage = "剪贴板中没有可导入的 JSON 文本"
+            return
+        }
+
+        do {
+            let document = try DeckFileImporter().load(
+                from: Data(json.utf8)
+            )
+
+            Task { @MainActor in
+                do {
+                    let outcome = try await appModel.importDeck(document)
+
+                    switch outcome {
+                    case .created(let deck):
+                        importStatusMessage = "导入成功: \(deck.title)"
+                    case .existing(let deck):
+                        importStatusMessage = "卡组已存在：\(deck.title)"
+                    }
+                } catch {
+                    importStatusMessage = error.localizedDescription
+                }
+            }
+        } catch {
+            importStatusMessage = error.localizedDescription
+        }
+    }
+
     // 将卡组名称转换为适合 macOS 文件名的文本。
     // 例如“英语 / Unit 1”会变成“英语 - Unit 1”。
     private static func safeFilename(from title: String) -> String {
@@ -364,6 +412,38 @@ struct DecksPage: View {
         // 防止卡组名称只有空格或禁止字符时生成空文件名。
         return filename.isEmpty ? "EchoCards" : filename
     }
+
+    // 用户可复制给 AI 的提示词。
+    // 内容严格使用当前 JSON 导入器支持的单卡组格式。
+    private static let aiImportPrompt = """
+    请把我接下来提供的学习材料整理为知声卡可导入的 JSON 文件。
+
+    请直接生成一个可下载的 UTF-8 .json 文件，不要使用 Markdown 代码块，不要添加解释文字。
+    如果当前环境无法生成下载文件，请只输出有效 JSON，方便我复制到知声卡的“从剪贴板导入 JSON”功能。
+    一个 JSON 文件只能包含一个卡组，必须使用以下结构：
+
+    {
+      "title": "卡组名称",
+      "description": "卡组说明（可省略）",
+      "cards": [
+        {
+          "title": "卡片标题",
+          "content": "卡片正文",
+          "speechText": "朗读文本（可省略）",
+          "memoryTip": "快速记忆点（可省略）"
+        }
+      ]
+    }
+
+    生成规则：
+    1. title 和 cards 必填；cards 数量必须为 1 到 1000。
+    2. 每张卡片的 title 和 content 必填，且不能是空字符串。
+    3. description、speechText、memoryTip 没有内容时请直接省略字段。
+    4. 保持 cards 数组顺序，不要输出 ID、时间戳、学习进度、记录或其他字段。
+    5. 输出 UTF-8 JSON，确保可以直接保存为 .json 文件后导入。
+
+    学习材料：
+    """
 
 }
 

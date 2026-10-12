@@ -37,8 +37,15 @@ struct DeckFileImporter {
       throw DeckImportError.cannotReadFile
     }
 
-    // 即使文件源数据没有提供大小
-    // 读取后仍然再次检查，不能只依赖第一次检查
+    return try load(from: data)
+  }
+
+  // 从内存中的 JSON 数据读取卡组。
+  // 剪贴板导入和文件导入共用相同的解码与校验规则。
+  func load(
+    from data: Data
+  ) throws -> DeckImportDocument {
+    // 即使数据不是来自文件，也要限制最大导入大小。
     guard data.count <= maximumFileSize else {
       throw DeckImportError.fileTooLarge
     }

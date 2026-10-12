@@ -15,6 +15,12 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable, Sendable {
     // 切换到当前卡组的下一张
     case nextCard = "next_card"
 
+    // 显示当前卡组的浮动学习窗口
+    case showFloatingWindow = "show_floating_window"
+
+    // 隐藏当前显示的浮动学习窗口
+    case hideFloatingWindow = "hide_floating_window"
+
     // 每个枚举值本身就是唯一标识
     var id: Self {
         self
@@ -29,6 +35,10 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable, Sendable {
             return "翻面"
         case .nextCard:
             return "下一张"
+        case .showFloatingWindow:
+            return "显示浮动窗口"
+        case .hideFloatingWindow:
+            return "隐藏浮动窗口"
         }
     }
 }
@@ -90,30 +100,31 @@ struct ShortcutModifiers: OptionSet, Codable, Sendable {
     }
 }
 
-// ShortcutKey 表示可以用于学习控制的按键
+// ShortcutKey 表示全局快捷键中的主按键
 //
-// 领域模型保存语义名称
-// macOS 平台键码。平台适配器以后负责转换
-enum ShortcutKey: String, CaseIterable, Codable, Sendable {
-    case leftArrow = "left_arrow"
-    case space = "space"
-    case rightArrow = "right_arrow"
+// keyCode 保存 macOS 虚拟建码，支持用户录制任意主按键
+// displayText 保存设置页显示给用户文字
+struct ShortcutKey: Equatable, Codable, Sendable {
+    // macOs 用于识别按键的虚拟键码
+    let keyCode: UInt16
 
-    // 返回设置页面显示的按键名称
-    var displayText: String {
-        switch self {
-        case .leftArrow:
-            return "←"
+    // 设置页展示的按键名称
+    let displayText: String
 
-        case .space:
-            return "Space"
-
-        case .rightArrow:
-            return "→"
-
-        }
+    init(
+        keyCode: UInt16,
+        displayText: String
+    ) {
+        self.keyCode =  keyCode
+        self.displayText = displayText
     }
+
+    // 三个默认快捷键使用的主按键
+    static let leftArrow = ShortcutKey(keyCode: 123, displayText: "←")
+    static let space = ShortcutKey(keyCode: 49, displayText: "Space")
+    static let rightArrow = ShortcutKey(keyCode: 124, displayText: "→")
 }
+
 
 // GlobalShortcut 表示一个业务操作对应的完整快捷键
 struct GlobalShortcut: Identifiable, Equatable, Codable, Sendable {
@@ -136,13 +147,27 @@ struct GlobalShortcut: Identifiable, Equatable, Codable, Sendable {
         modifiers.displayText + key.displayText
     }
     
-    // 第一版使用的三组默认全局快捷键。
+    // 默认全局快捷键。
+    //
+    // 前三组用于控制卡片；后两组用于显示和隐藏浮动学习窗口。
     
     static var defaults: [GlobalShortcut] {
         [
             GlobalShortcut(action: .previousCard, modifiers: [.control, .option], key: .leftArrow),
             GlobalShortcut(action: .flipCard, modifiers: [.control, .option], key: .space),
-            GlobalShortcut(action: .nextCard, modifiers: [.control, .option], key: .rightArrow)
+            GlobalShortcut(action: .nextCard, modifiers: [.control, .option], key: .rightArrow),
+            // Control + Option + O：显示浮动学习窗口
+            GlobalShortcut(
+                action: .showFloatingWindow,
+                modifiers: [.control, .option],
+                key: ShortcutKey(keyCode: 31, displayText: "O")
+            ),
+            // Control + Option + W：隐藏浮动学习窗口
+            GlobalShortcut(
+                action: .hideFloatingWindow,
+                modifiers: [.control, .option],
+                key: ShortcutKey(keyCode: 13, displayText: "W")
+            )
         ]
     }
 }

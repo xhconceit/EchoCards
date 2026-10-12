@@ -6,8 +6,14 @@ struct FloatingStudyView: View {
   // 从环境读取 App 级共享状态和用户设置
   @Environment(AppModel.self) private var appModel
 
+  // 关闭指定的浮动学习窗口。
+  @Environment(\.dismissWindow) private var dismissWindow
+
   @State private var viewModel = StudyViewModel()
   @State private var keyboardMonitor = KeyboardMonitor()
+
+  // 鼠标位于浮动窗口内容区域时显示关闭按钮。
+  @State private var isPointerHovering = false
 
   // 保存读取卡片失败时的提示文字
   //
@@ -34,6 +40,8 @@ struct FloatingStudyView: View {
             : currentCard.content,
           fontSize: appModel.settings.cardFontSize
         )
+        // 标题区域占用控制按钮之外的剩余空间，正文可以保持居中。
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .id("\(viewModel.currentIndex)-\(viewModel.isShowingBack)")
         .transition(.opacity.combined(with: .scale(scale: 0.96)))
         .contentShape(.rect)
@@ -42,10 +50,6 @@ struct FloatingStudyView: View {
             viewModel.flipCard()
           }
         }
-
-        Text("\(viewModel.currentIndex + 1) / \(viewModel.cards.count)")
-          .font(.caption2)
-          .foregroundStyle(.tertiary)
 
         if appModel.settings.showsControls {
 
@@ -88,10 +92,42 @@ struct FloatingStudyView: View {
     // 内容尺寸变化时窗口也会跟着调整。
     .frame(
       width: appModel.settings.floatingWindowWidth,
-      height: appModel.settings.floatingWindowHeight
+      height: appModel.settings.floatingWindowHeight,
+      // 固定窗口尺寸后，内容从顶部开始排列。
+      alignment: .top
     )
+    .overlay(alignment: .topTrailing) {
+      // 将进度固定在右上角，不占用卡片内容区域。
+      if viewModel.currentCard != nil {
+        Text("\(viewModel.currentIndex + 1) / \(viewModel.cards.count)")
+          .font(.caption2)
+          .foregroundStyle(.tertiary)
+          // 进度文字不拦截点击和拖动手势。
+          .allowsHitTesting(false)
+          .padding(16)
+      }
+    }
+    .overlay(alignment: .topLeading) {
+      // 只在鼠标悬停时显示，保持学习窗口默认简洁。
+      if isPointerHovering {
+        Button {
+          dismissWindow(id: "floating-study-window")
+        } label: {
+          Image(systemName: "xmark.circle.fill")
+            .font(.title3)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("关闭浮动学习窗口")
+        .padding(12)
+      }
+    }
     // 让窗口中的空白，文字和卡片区域都能接收拖动手势
     .contentShape(Rectangle())
+    // 鼠标进入或离开时更新关闭按钮的显示状态。
+    .onHover { isHovering in
+      isPointerHovering = isHovering
+    }
     // simultaneousGesture 不会取代卡片点击和按钮点击
     // 拖动功能由 allowsDragging 设置控制
     .simultaneousGesture(
@@ -169,25 +205,27 @@ struct FloatingStudyView: View {
 
       appModel.markFloatingWindowOpen()
 
-      keyboardMonitor.start { keyCode in
-        switch keyCode {
-        case 123:
+      keyboardMonitor.start(
+        shortcuts: appModel.settings.globalShortcuts
+      ) { action in
+        // 根据领域层动作控制当前学习卡片
+        switch action {
+        case .previousCard:
           animate {
             viewModel.showPreviousCard()
           }
-          return true
-        case 124:
+        case .nextCard:
           animate {
             viewModel.showNextCard()
           }
-          return true
-        case 49:
+        case .flipCard:
           animate {
             viewModel.flipCard()
           }
-          return true
-        default:
-          return false
+        case .showFloatingWindow, .hideFloatingWindow:
+          // 显示和隐藏窗口属于应用级操作。
+          // 后续由主窗口长期持有的全局监听器统一处理。
+          break
         }
       }
 
@@ -217,14 +255,25 @@ struct TitleView: View {
   let fontSize: Double
 
   var body: some View {
-    VStack(spacing: 8) {
+    ZStack {
+      // 正文始终位于可用区域中央。
+      Text(subtitle)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+      // 标题覆盖在区域顶部，不随正文的居中布局移动。
+      VStack {
       Text(title)
         .font(
           .system(size: fontSize)
         )
-      Text(subtitle)
-        .font(.caption)
-        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+
+        Spacer(minLength: 0)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 }

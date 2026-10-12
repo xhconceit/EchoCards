@@ -8,9 +8,13 @@ struct SettingsPage: View {
     @Environment(AppModel.self)
     private var appModel
 
+    // 当前正在等待用户按键的学习操作
+    // nil 表示当前没有处于录制状态的快捷键
+    @State private var recordingAction: ShortcutAction?
+
     var body: some View {
         // 让 Toggle Slider Picker 能够双向绑定到 Settings
-           @Bindable var appModel = appModel
+        @Bindable var appModel = appModel
 
         Form {
 
@@ -103,8 +107,39 @@ struct SettingsPage: View {
                     Text("自动翻页延迟")
                 }
 
-                Text("\(Double(appModel.settings.autoAdvanceDelayMilliseconds) / 1000, specifier: "%.1f") 秒")
+                Text(
+                    "\(Double(appModel.settings.autoAdvanceDelayMilliseconds) / 1000, specifier: "%.1f") 秒"
+                )
                 .foregroundStyle(.secondary)
+            }
+
+            Section("全局快捷键") {
+                // 显示每个学习操作当前绑定的快捷键
+                ForEach(appModel.settings.globalShortcuts) { shortcut in
+                    HStack {
+                        Text(shortcut.action.displayName)
+
+                        Spacer()
+
+                        Button {
+                            // 点击后标记当前操作，下一步会由录制控件接收按键
+                            recordingAction = shortcut.action
+                        } label: {
+                            Text(
+                                recordingAction == shortcut.action ? "请按组合键" : shortcut.displayText
+                            )
+                            .fontDesign(.monospaced)
+                            .frame(minWidth: 100, alignment: .trailing)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("\(shortcut.action.displayName) 快捷键")
+                    }
+                }
+
+                Button("恢复默认快捷键") {
+                    // 只恢复快捷键，不影响窗口和学习相关设置
+                    appModel.settings.globalShortcuts = GlobalShortcut.defaults
+                }
             }
 
             Section {
@@ -117,7 +152,50 @@ struct SettingsPage: View {
         .formStyle(.grouped)
         .navigationTitle("设置")
         .padding()
-        
-    
+        .background {
+            // 录制控件保存隐藏，只在录制状态时获取键盘焦点
+            ShortcutRecordingView(
+                isRecording: recordingAction != nil
+            ) { key, modifiers in
+                guard let action = recordingAction else {
+                    return
+                }
+
+                replaceShortcut(
+                    action: action,
+                    key: key,
+                    modifiers: modifiers
+                )
+
+                // 保存成功后退出录制状态
+                recordingAction = nil
+            }
+            .frame(width: 0, height: 0)
+        }
+
+    }
+
+    // 替换指定学习操作的快捷键
+    //
+    // 重新赋值整个数组，确保 AppModel.settings 的 didSet
+    // 会保存新的 UserSettings
+    private func replaceShortcut(
+        action: ShortcutAction,
+        key: ShortcutKey,
+        modifiers: ShortcutModifiers
+    ) {
+        var shortcuts = appModel.settings.globalShortcuts
+
+        guard let index = shortcuts.firstIndex(where: { $0.action == action }) else {
+            return
+        }
+
+        shortcuts[index] = GlobalShortcut(
+            action: action,
+            modifiers: modifiers,
+            key: key
+        )
+
+        appModel.settings.globalShortcuts = shortcuts
     }
 }
