@@ -153,19 +153,19 @@ struct GlobalShortcut: Identifiable, Equatable, Codable, Sendable {
     
     static var defaults: [GlobalShortcut] {
         [
-            GlobalShortcut(action: .previousCard, modifiers: [.control, .option], key: .leftArrow),
-            GlobalShortcut(action: .flipCard, modifiers: [.control, .option], key: .space),
-            GlobalShortcut(action: .nextCard, modifiers: [.control, .option], key: .rightArrow),
+            GlobalShortcut(action: .previousCard, modifiers: [.option], key: .leftArrow),
+            GlobalShortcut(action: .flipCard, modifiers: [.option], key: .space),
+            GlobalShortcut(action: .nextCard, modifiers: [.option], key: .rightArrow),
             // Control + Option + O：显示浮动学习窗口
             GlobalShortcut(
                 action: .showFloatingWindow,
-                modifiers: [.control, .option],
+                modifiers: [.option],
                 key: ShortcutKey(keyCode: 31, displayText: "O")
             ),
             // Control + Option + W：隐藏浮动学习窗口
             GlobalShortcut(
                 action: .hideFloatingWindow,
-                modifiers: [.control, .option],
+                modifiers: [.option],
                 key: ShortcutKey(keyCode: 13, displayText: "W")
             )
         ]

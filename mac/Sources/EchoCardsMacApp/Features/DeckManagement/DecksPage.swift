@@ -112,36 +112,6 @@ struct DecksPage: View {
                     // 限制列表宽度，避免窗口变宽时内容过度拉伸
                     //.frame(maxWidth: 520)
 
-                    Button("导入 JSON 卡组") {
-                        // 修改状态后，下面的 fileImporter 会打开系统文件选择器
-                        isShowingFileImporter = true
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    Button("复制 AI 导入提示词", systemImage: "doc.on.clipboard") {
-                        // 将符合知声卡导入规范的提示词复制到系统剪贴板。
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(
-                            Self.aiImportPrompt,
-                            forType: .string
-                        )
-                        importStatusMessage = "已复制 AI 导入提示词"
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button("从剪贴板导入 JSON", systemImage: "clipboard") {
-                        importJSONFromPasteboard()
-                    }
-                    .buttonStyle(.bordered)
-
-                    // 有导入结果时显示提示文字
-                    if let importStatusMessage {
-                        Text(importStatusMessage)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-
                 }
                 .padding(24)
             }
@@ -252,6 +222,54 @@ struct DecksPage: View {
                 exportDocument = nil
 
             }
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    // 高频操作独立展示 用户始终能在窗口右上角找到它
+                    Button("导入", systemImage: "square.and.arrow.down") {
+                        isShowingFileImporter = true
+                    }
+                    // 低频的辅助操作收进菜单，避免首页内容区显得拥挤。
+                    
+                    Menu("更多导入方式", systemImage: "ellipsis.circle") {
+                        Button("从剪贴板导入 JSON", systemImage: "clipboard") {
+                            importJSONFromPasteboard()
+                        }
+                        
+                        Button("复制 AI 导入提示词", systemImage: "doc.on.clipboard") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(
+                                               Self.aiImportPrompt,
+                                               forType: .string
+                                           )
+                                           importStatusMessage = "已复制 AI 导入提示词"
+                        }
+                    }
+                }
+            }
+            // 提示浮在窗口顶部，不占用卡组列表空间。
+            .overlay(alignment: .top) {
+                if let message = importStatusMessage {
+                    Text(message)
+                        .font(.callout)
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.regularMaterial)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.15), radius: 8 , y: 3)
+                        .padding(.top, 16)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .task(id: importStatusMessage) {
+                guard importStatusMessage != nil else {return}
+             
+                try? await Task.sleep(for: .seconds(2))
+
+                guard !Task.isCancelled else { return }
+                importStatusMessage = nil
+            }
+            .animation(.easeInOut(duration: 0.2), value: importStatusMessage)
             .task {
 
                 do {
