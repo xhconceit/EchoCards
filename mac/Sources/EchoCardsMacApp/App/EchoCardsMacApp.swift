@@ -48,7 +48,11 @@ struct EchoCardsMacApp: App {
         // 把共享状态放入 SwiftUI 环境
         // 当前窗口下的所有子 View 都可以读取同一个 AppModel
         .environment(appModel)
-      // .frame(minWidth: 360, minHeight: 240)  //  内容允许的最小尺寸
+        .frame(minWidth: 360, minHeight: 240)  //  内容允许的最小尺寸
+        .background {
+          GlobalShortcutHost()
+            .environment(appModel)
+        }
     }
     .defaultSize(width: 420, height: 300)  // 窗口第一次出现时的默认尺寸
     // .windowStyle(.plain)

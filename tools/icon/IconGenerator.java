@@ -64,9 +64,37 @@ public final class IconGenerator {
     };
     private static final int[] DENSITY_SIZES = { 48, 72, 96, 144, 192 };
 
+    private static final String[] MAC_ICON_NAMES = {
+        "icon_16x16.png",
+        "icon_16x16@2x.png",
+        "icon_32x32.png",
+        "icon_32x32@2x.png",
+        "icon_128x128.png",
+        "icon_128x128@2x.png",
+        "icon_256x256.png",
+        "icon_256x256@2x.png",
+        "icon_512x512.png",
+        "icon_512x512@2x.png"
+    };
+    private static final int[] MAC_ICON_SIZES = {
+        16, 32,
+        32, 64,
+        128, 256,
+        256, 512,
+        512, 1024
+    };
+
     public static void main(String[] args) throws Exception {
+        if (args.length == 2 && args[0].equals("--mac")) {
+            generateMacIcons(new File(args[1]));
+            return;
+        }
+
         if (args.length < 1) {
-            System.err.println("用法: java tools/icon/IconGenerator.java <res 目录> [预览图输出路径]");
+            System.err.println(
+                "用法: java tools/icon/IconGenerator.java <res 目录> [预览图输出路径]\n"
+                    + "   或: java tools/icon/IconGenerator.java --mac <AppIcon.appiconset 目录>"
+            );
             System.exit(2);
         }
         File resDir = new File(args[0]);
@@ -87,6 +115,20 @@ public final class IconGenerator {
             }
             write(contactSheet(), preview);
             System.out.println("生成预览 " + preview);
+        }
+    }
+
+    private static void generateMacIcons(File outputDir) throws Exception {
+        if (!outputDir.isDirectory() && !outputDir.mkdirs()) {
+            throw new IllegalStateException("无法创建目录: " + outputDir);
+        }
+
+        for (int i = 0; i < MAC_ICON_SIZES.length; i++) {
+            File outputFile = new File(outputDir, MAC_ICON_NAMES[i]);
+            write(legacyIcon(MAC_ICON_SIZES[i], false), outputFile);
+            System.out.println(
+                "生成 macOS 图标 " + MAC_ICON_NAMES[i] + " @" + MAC_ICON_SIZES[i] + "px"
+            );
         }
     }
 

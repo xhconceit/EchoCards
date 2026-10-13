@@ -11,6 +11,8 @@ struct FloatingWindowConfigurator: NSViewRepresentable {
   let appearsOnAllSpaces: Bool
   // 是否允许拖动窗口背景来移动窗口
   let allowsDragging: Bool
+  // SwiftUI 内容希望窗口采用的实际尺寸。
+  let contentSize: CGSize
   // SwiftUI 第一次创建适配器时调用
   func makeNSView(context: Context) -> some NSView {
     let view = NSView()
@@ -42,6 +44,31 @@ struct FloatingWindowConfigurator: NSViewRepresentable {
     window.level = .floating
     // 无标题栏窗口可以通过拖动背景移动
     window.isMovableByWindowBackground = allowsDragging
+
+    // SwiftUI 内容变化后，显式同步到底层 NSWindow。
+    // 保持窗口上边缘不动，让增加的高度向下展开。
+    if abs(window.contentLayoutRect.width - contentSize.width) > 0.5
+      || abs(window.contentLayoutRect.height - contentSize.height) > 0.5
+    {
+      let oldTopEdge = window.frame.maxY
+      let targetContentRect = NSRect(
+        origin: .zero,
+        size: contentSize
+      )
+      let targetFrameSize = window.frameRect(
+        forContentRect: targetContentRect
+      ).size
+
+      var targetFrame = window.frame
+      targetFrame.size = targetFrameSize
+      targetFrame.origin.y = oldTopEdge - targetFrameSize.height
+
+      window.setFrame(
+        targetFrame,
+        display: true,
+        animate: true
+      )
+    }
 
     if appearsOnAllSpaces {
       // 让窗口出现在所有普通桌面空间。

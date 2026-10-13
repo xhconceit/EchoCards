@@ -24,16 +24,16 @@ struct StudyViewModelTests {
     let viewModel = StudyViewModel()
 
     #expect(viewModel.currentIndex == 0)
-    #expect(viewModel.currentCard.front == "Apple")
+    #expect(viewModel.currentCard?.title == "Apple")
 
     viewModel.showNextCard()
 
     #expect(viewModel.currentIndex == 1)
-    #expect(viewModel.currentCard.front == "Book")
+    #expect(viewModel.currentCard?.title == "Book")
 
     viewModel.showNextCard()
 
     #expect(viewModel.currentIndex == 0)
-    #expect(viewModel.currentCard.front == "Apple")
+    #expect(viewModel.currentCard?.title == "Apple")
   }
 }

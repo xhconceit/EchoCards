@@ -6,11 +6,19 @@ struct FloatingStudyView: View {
   // 从环境读取 App 级共享状态和用户设置
   @Environment(AppModel.self) private var appModel
 
+  // 使用 AppModel 长期持有的共享学习状态
+  //
+  // 这里不在创建新的 StudyViewModel
+  // 否则浮动窗口和全局快捷键会操作两个不同实例
+  //
+  // 使用计算属性可以保留当前代码中的viewModel 名称
+  // 下面显示卡片和切换卡片的代码不需要全部重命名
+  private var viewModel: StudyViewModel {
+    appModel.studyViewModel
+  }
+
   // 关闭指定的浮动学习窗口。
   @Environment(\.dismissWindow) private var dismissWindow
-
-  @State private var viewModel = StudyViewModel()
-  @State private var keyboardMonitor = KeyboardMonitor()
 
   // 鼠标位于浮动窗口内容区域时显示关闭按钮。
   @State private var isPointerHovering = false
@@ -19,6 +27,10 @@ struct FloatingStudyView: View {
   //
   // nil 表示当前没有加载错误
   @State private var loadErrorMessage: String?
+
+  // SwiftUI 实际测量到的卡片内容高度。
+  // 卡片文字或控制按钮变化时，这个值会自动更新。
+  @State private var measuredContentHeight: CGFloat = 0
 
   var body: some View {
     VStack(spacing: 12) {
@@ -40,8 +52,9 @@ struct FloatingStudyView: View {
             : currentCard.content,
           fontSize: appModel.settings.cardFontSize
         )
-        // 标题区域占用控制按钮之外的剩余空间，正文可以保持居中。
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // 只占满可用宽度，不强行占满无限高度。
+        // 这样多行文字的真实高度才能传递给外层窗口。
+        .frame(maxWidth: .infinity)
         .id("\(viewModel.currentIndex)-\(viewModel.isShowingBack)")
         .transition(.opacity.combined(with: .scale(scale: 0.96)))
         .contentShape(.rect)
@@ -85,15 +98,27 @@ struct FloatingStudyView: View {
         )
       }
     }
+    // 在添加外层最小高度之前测量内容本身需要的高度。
+    // 额外的 48 pt 来自下面四周各 24 pt 的 padding。
+    .onGeometryChange(for: CGFloat.self) { proxy in
+      proxy.size.height
+    } action: { newHeight in
+      measuredContentHeight = newHeight
+    }
     .padding(24)
     // 使用用户设置控制浮动窗口内容尺寸。
     //
     // 因为这个 Window 使用 plain 样式，
     // 内容尺寸变化时窗口也会跟着调整。
+    // 宽度保持用户设置的值。
     .frame(
       width: appModel.settings.floatingWindowWidth,
-      height: appModel.settings.floatingWindowHeight,
-      // 固定窗口尺寸后，内容从顶部开始排列。
+      alignment: .top
+    )
+    // 设置值只作为最小高度。
+    // 当标题或正文换行后需要更多空间时，内容可以继续向下撑开。
+    .frame(
+      minHeight: appModel.settings.floatingWindowHeight,
       alignment: .top
     )
     .overlay(alignment: .topTrailing) {
@@ -153,7 +178,15 @@ struct FloatingStudyView: View {
     .background {
       FloatingWindowConfigurator(
         appearsOnAllSpaces: appModel.settings.appearsOnAllSpaces,
-        allowsDragging: appModel.settings.allowsDragging
+        allowsDragging: appModel.settings.allowsDragging,
+        // 设置高度是下限；文字需要更多空间时使用测量高度。
+        contentSize: CGSize(
+          width: appModel.settings.floatingWindowWidth,
+          height: max(
+            appModel.settings.floatingWindowHeight,
+            measuredContentHeight + 48
+          )
+        )
       )
       .frame(width: 0, height: 0)
     }
@@ -202,39 +235,18 @@ struct FloatingStudyView: View {
       }
     }
     .onAppear {
-
+      // 浮动窗口出现后，只更新窗口状态
+      //
+      // 全局快捷键不再由这个窗口启动
+      // 而是由生命周期更长的 AppModel 统一管理
       appModel.markFloatingWindowOpen()
-
-      keyboardMonitor.start(
-        shortcuts: appModel.settings.globalShortcuts
-      ) { action in
-        // 根据领域层动作控制当前学习卡片
-        switch action {
-        case .previousCard:
-          animate {
-            viewModel.showPreviousCard()
-          }
-        case .nextCard:
-          animate {
-            viewModel.showNextCard()
-          }
-        case .flipCard:
-          animate {
-            viewModel.flipCard()
-          }
-        case .showFloatingWindow, .hideFloatingWindow:
-          // 显示和隐藏窗口属于应用级操作。
-          // 后续由主窗口长期持有的全局监听器统一处理。
-          break
-        }
-      }
-
     }
     .onDisappear {
-      keyboardMonitor.stop()
-
       // 关闭窗口只更新显示状态
-      // 不清除 selectedDeckID
+      // 不停止应用级全局快捷键
+      //
+      // 因此窗口关闭后，显示浮动窗口快捷键
+      // 仍然有机会继续工作
       appModel.markFloatingWindowClosed()
     }
   }
@@ -255,26 +267,25 @@ struct TitleView: View {
   let fontSize: Double
 
   var body: some View {
-    ZStack {
-      // 正文始终位于可用区域中央。
+    // 使用普通纵向布局，让标题和正文的实际高度相加。
+    // ZStack、无限高度和 Spacer 都不会再吞掉文字的固有高度。
+    VStack(spacing: 16) {
+        Text(title)
+          .font(
+            .system(size: fontSize)
+          )
+          .multilineTextAlignment(.center)
+        // 标题变成多行时，让它的实际高度参与窗口尺寸计算。
+        .fixedSize(horizontal: false, vertical: true)
+
       Text(subtitle)
         .font(.caption)
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-      // 标题覆盖在区域顶部，不随正文的居中布局移动。
-      VStack {
-      Text(title)
-        .font(
-          .system(size: fontSize)
-        )
-        .multilineTextAlignment(.center)
-
-        Spacer(minLength: 0)
-      }
-      .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // 保留换行后文字所需的完整纵向高度，避免被压缩或截断。
+        .fixedSize(horizontal: false, vertical: true)
     }
+    .frame(maxWidth: .infinity)
   }
 }
 

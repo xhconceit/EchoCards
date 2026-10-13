@@ -9,6 +9,28 @@ import Observation
 @MainActor
 final class AppModel {
 
+  // 长期持有系统全局快捷键管理器
+  //
+  // 不能把它放在 FloatingStudyView 中：
+  // 浮动窗口关闭后，View 会消失，快捷键也会随之注销，
+  // 此时“显示浮动窗口”的全局快捷键就无法工作。
+  //
+  // AppModel 的生命周期与应用一致，
+  // 因此切换到其他应用或关闭浮动窗口后，
+  // 已注册的快捷键仍然可以继续生效。
+  private let globalHotKeyManager = GlobalHotKeyManager()
+
+  // 主窗口、浮动窗口和全局快捷键共享同一个学习状态。
+  //
+  // 如果 StudyViewModel 只由 FloatingStudyView 创建，
+  // 浮动窗口关闭后，应用级快捷键就找不到要控制的卡片。
+  //
+  // 放在 AppModel 中后：
+  // 1. 浮动窗口负责显示这个状态；
+  // 2. 全局快捷键负责修改这个状态；
+  // 3. 窗口暂时关闭时，学习进度仍然保留。
+  let studyViewModel = StudyViewModel()
+
   // 负责生成 Android 兼容 JSON 的导出服务
   private let deckExportService: DeckExportService
 
@@ -136,6 +158,44 @@ final class AppModel {
   func clearSelectedDeck() {
     selectedDeckID = nil
     isFloatingWindowOpen = false
+  }
+
+  // 注册当前设置中的全局快捷键
+  //
+  // 这个方法由应用入口调用一次
+  // 用户修改快捷键设置后，也可以再次调用
+  // GlobalHotKeyManager.start 会先注销旧快捷键
+  func startGlobalShortcuts(
+    onShowFloatingWindow: @escaping () -> Void = {},
+    onHideFloatingWindow: @escaping () -> Void = {}
+  ) {
+    globalHotKeyManager.start(
+      shortcuts: settings.globalShortcuts
+    ) { [weak self] action in
+      // 使用 weak 避免下面的引用关系形成循环
+      //
+      // AppModel -> GlobalHotKeyManager -> 回调 -> AppModel
+      guard let self else {
+        return
+      }
+
+      switch action {
+      case .previousCard:
+        // 切换到上一张学习卡片
+        studyViewModel.showPreviousCard()
+      case .flipCard:
+        // 切换当前卡片的正面和背面
+        studyViewModel.flipCard()
+      case .nextCard:
+        // 切换下一张学习卡片
+        studyViewModel.showNextCard()
+      case .showFloatingWindow:
+        onShowFloatingWindow()
+      case .hideFloatingWindow:
+        onHideFloatingWindow()
+      }
+
+    }
   }
 
   // // 把所有用户设置恢复为应用默认值。
