@@ -59,7 +59,7 @@ jobs:
             -destination 'generic/platform=macOS' \
             -archivePath dist/EchoCards.xcarchive \
             -derivedDataPath .build/xcode \
-            -CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Package macOS app
         working-directory: mac
