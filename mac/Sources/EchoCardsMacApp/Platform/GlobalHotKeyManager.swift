@@ -161,6 +161,10 @@ final class GlobalHotKeyManager {
         // 接收注册成功后产生的系统引用
         &hotKeyRef
       )
+        
+        if registrationStatus == eventHotKeyExistsErr {
+            print("快捷键已被其他程序占用：\(shortcut.displayText)")
+        }
 
       guard registrationStatus == noErr, let hotKeyRef
       else {

@@ -69,7 +69,7 @@ struct DeckImportMapper {
         // 所有卡片都关联到刚才创建的卡组
         deckID: deckID,
         title: importedCard.title,
-        content: importedCard.title,
+        content: importedCard.content,
         speechText: importedCard.speechText,
         memoryTip: importedCard.memoryTip,
         // JSON 数组顺序就是卡片顺序。

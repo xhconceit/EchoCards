@@ -43,12 +43,10 @@ struct FloatingStudyView: View {
         )
       } else if let currentCard = viewModel.currentCard {
         TitleView(
-          title: viewModel.isShowingBack
-            ? currentCard.memoryTipText
-            : currentCard.title,
+          title: currentCard.title,
           // 正面显示正文，背面显示内容类型说明。
           subtitle: viewModel.isShowingBack
-            ? "快速记忆点"
+          ? currentCard.memoryTipText
             : currentCard.content,
           fontSize: appModel.settings.cardFontSize
         )
@@ -269,7 +267,7 @@ struct TitleView: View {
   var body: some View {
     // 使用普通纵向布局，让标题和正文的实际高度相加。
     // ZStack、无限高度和 Spacer 都不会再吞掉文字的固有高度。
-    VStack(spacing: 16) {
+    VStack(spacing: 12) {
         Text(title)
           .font(
             .system(size: fontSize)
@@ -279,8 +277,15 @@ struct TitleView: View {
         .fixedSize(horizontal: false, vertical: true)
 
       Text(subtitle)
-        .font(.caption)
-        .foregroundStyle(.secondary)
+        // 正文比标题稍小、颜色稍柔和，但仍保持足够的可读性。
+        .font(
+          .system(
+            size: max(15, fontSize * 0.62),
+            weight: .regular
+          )
+        )
+        .foregroundStyle(Color.primary.opacity(0.72))
+        .lineSpacing(2)
         .multilineTextAlignment(.center)
         // 保留换行后文字所需的完整纵向高度，避免被压缩或截断。
         .fixedSize(horizontal: false, vertical: true)

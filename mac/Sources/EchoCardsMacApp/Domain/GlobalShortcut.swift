@@ -156,17 +156,17 @@ struct GlobalShortcut: Identifiable, Equatable, Codable, Sendable {
             GlobalShortcut(action: .previousCard, modifiers: [.option], key: .leftArrow),
             GlobalShortcut(action: .flipCard, modifiers: [.option], key: .space),
             GlobalShortcut(action: .nextCard, modifiers: [.option], key: .rightArrow),
-            // Control + Option + O：显示浮动学习窗口
+            // Option + ,：显示浮动学习窗口
             GlobalShortcut(
                 action: .showFloatingWindow,
                 modifiers: [.option],
-                key: ShortcutKey(keyCode: 31, displayText: "O")
+                key: ShortcutKey(keyCode: 43, displayText: ",")
             ),
-            // Control + Option + W：隐藏浮动学习窗口
+            // Option + .：隐藏浮动学习窗口
             GlobalShortcut(
                 action: .hideFloatingWindow,
                 modifiers: [.option],
-                key: ShortcutKey(keyCode: 13, displayText: "W")
+                key: ShortcutKey(keyCode: 47, displayText: ".")
             )
         ]
     }

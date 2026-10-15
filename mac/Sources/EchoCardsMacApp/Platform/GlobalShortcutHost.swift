@@ -25,22 +25,30 @@ struct GlobalShortcutHost: View {
       .frame(width: 0, height: 0)
       .allowsHitTesting(false)
       .task {
-        appModel.startGlobalShortcuts(
-          onShowFloatingWindow: {
-            // 使用 Scene 中声明的窗口 ID 打开学习窗口
-            openWindow(id: "floating-study-window")
-
-            // 同步更新应用保存的窗口状态
-            appModel.markFloatingWindowOpen()
-          },
-          onHideFloatingWindow: {
-            // 关闭相同 ID 的学习窗口
-            dismissWindow(id: "floating-study-window")
-
-            // 同步更新应用保存的窗口状态
-            appModel.markFloatingWindowClosed()
-          }
-        )
+        registerShortcuts()
       }
+      .onChange(of: appModel.settings.globalShortcuts) {
+        // 录制新快捷键或恢复默认值后，立即替换系统中的热键。
+        registerShortcuts()
+      }
+  }
+
+  private func registerShortcuts() {
+    appModel.startGlobalShortcuts(
+      onShowFloatingWindow: {
+        // 使用 Scene 中声明的窗口 ID 打开学习窗口
+        openWindow(id: "floating-study-window")
+
+        // 同步更新应用保存的窗口状态
+        appModel.markFloatingWindowOpen()
+      },
+      onHideFloatingWindow: {
+        // 关闭相同 ID 的学习窗口
+        dismissWindow(id: "floating-study-window")
+
+        // 同步更新应用保存的窗口状态
+        appModel.markFloatingWindowClosed()
+      }
+    )
   }
 }
