@@ -42,7 +42,7 @@ struct EchoCardsMacApp: App {
   }
 
   var body: some Scene {
-    WindowGroup("知声卡") {
+    WindowGroup("知声卡", id: "main-window") {
       MainView()
         // 把共享状态放入 SwiftUI 环境
         // 当前窗口下的所有子 View 都可以读取同一个 AppModel
@@ -73,5 +73,12 @@ struct EchoCardsMacApp: App {
     // App 启动时先不自动显示。
     // 是否恢复窗口以后根据用户设置决定。
     .defaultLaunchBehavior(.suppressed)
+
+    MenuBarExtra {
+      MenuBarView()
+        .environment(appModel)
+    } label: {
+      Label("知声卡", systemImage: "rectangle.stack.fill")
+    }
   }
 }

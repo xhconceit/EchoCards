@@ -82,12 +82,15 @@ final class StudyViewModel {
 
   // 使用另一个卡组的卡片替换当前内容
   func replaceCards(
-    with newCards: [Card]
+    with newCards: [Card],
+    preferredCardID: UUID? = nil
   ) {
     // 保存新的卡组数组
     cards = newCards
-    // 切换卡组后从第一张开始
-    currentIndex = 0
+    // 优先恢复上次显示的卡片；卡片已删除时安全回到第一张。
+    currentIndex = preferredCardID.flatMap { preferredCardID in
+      newCards.firstIndex { $0.id == preferredCardID }
+    } ?? 0
     // 切换卡组后始终显示正面
     isShowingBack = false
   }

@@ -9,6 +9,7 @@ import Foundation
 struct AppSessionStore {
   // UserDefaults 中保存卡组 ID 的固定键名
   private let selectedDeckIDKey = "echoCards.selectedDeckID"
+  private let currentCardIDsKey = "echoCards.currentCardIDsByDeck"
 
   private let userDefaults: UserDefaults
 
@@ -49,5 +50,33 @@ struct AppSessionStore {
         forKey: selectedDeckIDKey
       )
     }
+  }
+
+  // 每个卡组分别保存上次显示的卡片，避免切换卡组后丢失各自进度。
+  func loadCurrentCardID(for deckID: UUID) -> UUID? {
+    guard
+      let storedValues = userDefaults.dictionary(
+        forKey: currentCardIDsKey
+      ) as? [String: String],
+      let cardIDText = storedValues[deckID.uuidString]
+    else {
+      return nil
+    }
+
+    return UUID(uuidString: cardIDText)
+  }
+
+  func saveCurrentCardID(_ cardID: UUID?, for deckID: UUID) {
+    var storedValues = userDefaults.dictionary(
+      forKey: currentCardIDsKey
+    ) as? [String: String] ?? [:]
+
+    if let cardID {
+      storedValues[deckID.uuidString] = cardID.uuidString
+    } else {
+      storedValues.removeValue(forKey: deckID.uuidString)
+    }
+
+    userDefaults.set(storedValues, forKey: currentCardIDsKey)
   }
 }

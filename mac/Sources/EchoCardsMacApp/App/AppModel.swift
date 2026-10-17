@@ -20,6 +20,10 @@ final class AppModel {
   // 已注册的快捷键仍然可以继续生效。
   private let globalHotKeyManager = GlobalHotKeyManager()
 
+  // Carbon 热键不能注册只有修饰键的组合，因此单独管理“长按 Option”。
+  // 与 AppModel 保持相同生命周期，确保切换到其他应用后仍然有效。
+  private let optionLongPressMonitor = OptionLongPressMonitor()
+
   // 主窗口、浮动窗口和全局快捷键共享同一个学习状态。
   //
   // 如果 StudyViewModel 只由 FloatingStudyView 创建，
@@ -104,7 +108,7 @@ final class AppModel {
     // 才能使用它读取卡组 ID
     self.sessionStore = sessionStore
 
-    self.selectedDeckID = selectedDeckID
+    self.selectedDeckID = selectedDeckID ?? sessionStore.loadSelectedDeckID()
     self.isFloatingWindowOpen = isFloatingWindowOpen
     self.settingsStore = settingsStore
     // 如果调用者传入设置，就使用传入值；
@@ -141,6 +145,44 @@ final class AppModel {
     selectedDeckID = deckID
   }
 
+  // 将卡片交给学习状态，并恢复该卡组上次显示的位置。
+  func replaceStudyCards(with cards: [Card]) {
+    guard let selectedDeckID else {
+      studyViewModel.replaceCards(with: cards)
+      return
+    }
+
+    let savedCardID = sessionStore.loadCurrentCardID(
+      for: selectedDeckID
+    )
+    studyViewModel.replaceCards(
+      with: cards,
+      preferredCardID: savedCardID
+    )
+    saveCurrentStudyCard()
+  }
+
+  func showPreviousStudyCard() {
+    studyViewModel.showPreviousCard()
+    saveCurrentStudyCard()
+  }
+
+  func showNextStudyCard() {
+    studyViewModel.showNextCard()
+    saveCurrentStudyCard()
+  }
+
+  private func saveCurrentStudyCard() {
+    guard let selectedDeckID else {
+      return
+    }
+
+    sessionStore.saveCurrentCardID(
+      studyViewModel.currentCard?.id,
+      for: selectedDeckID
+    )
+  }
+
   // 在浮动窗口成功打开后更新状态
   func markFloatingWindowOpen() {
     isFloatingWindowOpen = true
@@ -169,6 +211,11 @@ final class AppModel {
     onShowFloatingWindow: @escaping () -> Void = {},
     onHideFloatingWindow: @escaping () -> Void = {}
   ) {
+    optionLongPressMonitor.start(
+      onLongPress: onShowFloatingWindow,
+      onLongPressEnd: onHideFloatingWindow
+    )
+
     globalHotKeyManager.start(
       shortcuts: settings.globalShortcuts
     ) { [weak self] action in
@@ -182,13 +229,13 @@ final class AppModel {
       switch action {
       case .previousCard:
         // 切换到上一张学习卡片
-        studyViewModel.showPreviousCard()
+        showPreviousStudyCard()
       case .flipCard:
         // 切换当前卡片的正面和背面
         studyViewModel.flipCard()
       case .nextCard:
         // 切换下一张学习卡片
-        studyViewModel.showNextCard()
+        showNextStudyCard()
       case .showFloatingWindow:
         onShowFloatingWindow()
       case .hideFloatingWindow:
@@ -289,6 +336,7 @@ final class AppModel {
     if isDeletingSelectedDeck {
       clearSelectedDeck()
     }
+    sessionStore.saveCurrentCardID(nil, for: deckID)
     // 删除成功后重新读取卡片列表
     // 让主界面立即刷新
     try await loadDecks()

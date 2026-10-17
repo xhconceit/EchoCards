@@ -67,7 +67,7 @@ struct FloatingStudyView: View {
           HStack(spacing: 8) {
             Button("上一张") {
               animate {
-                viewModel.showPreviousCard()
+                appModel.showPreviousStudyCard()
               }
             }
             .buttonStyle(.glass)
@@ -81,7 +81,7 @@ struct FloatingStudyView: View {
 
             Button("下一张") {
               animate {
-                viewModel.showNextCard()
+                appModel.showNextStudyCard()
               }
             }
             .buttonStyle(.glass)
@@ -216,10 +216,8 @@ struct FloatingStudyView: View {
 
         // 把真实卡片交给 StudyViewModel
         //
-        // replaceCards 会同时回到第一张和正面
-        viewModel.replaceCards(
-          with: cards
-        )
+        // 恢复该卡组上次显示的卡片；无记录时从第一张开始。
+        appModel.replaceStudyCards(with: cards)
       } catch is CancellationError {
         // 卡组快速切换导致任务取消属于正常情况
         // 不需要展示给用户
